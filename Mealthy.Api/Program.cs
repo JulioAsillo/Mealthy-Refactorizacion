@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+using Mealthy.Api.Security;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling;
+using Mealthy.Api.Shared.Infraestructure.OpenApi;
 using Mealthy.Api.Shared.Infraestructure.Persistence;
 using Mealthy.Api.Shared.Infraestructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -7,11 +10,14 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// ---------- Shared ----------
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddRouting(o => o.LowercaseUrls = true);
+builder.Services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -20,32 +26,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     if (builder.Environment.IsDevelopment())
         options.EnableSensitiveDataLogging().EnableDetailedErrors();
 });
-
 builder.Services.AddScoped<IUnitOfWorks, UnitOfWork>();
 
-builder.Services.AddControllers();
-builder.Services.AddRouting(o => o.LowercaseUrls = true);
-builder.Services.AddOpenApi();
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-
+// ---------- Bounded contexts ----------
+builder.Services.AddSecurityModule(builder.Configuration);
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseStatusCodePages();   // 401/403 del pipeline de auth también salen como ProblemDetails
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(o => o.AddPreferredSecuritySchemes(BearerSecuritySchemeTransformer.SchemeName));
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;   // para WebApplicationFactory en Fase 5
