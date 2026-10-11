@@ -49,4 +49,4 @@ app.MapControllers();
 
 app.Run();
 
-public partial class Program;   // para WebApplicationFactory en Fase 5
+public partial class Program;
