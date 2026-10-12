@@ -15,12 +15,7 @@ using Scalar.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------- Shared ----------
-const string FrontendCors = "Frontend";
-builder.Services.AddCors(o => o.AddPolicy(FrontendCors, p => p
-    .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
-    .AllowAnyHeader()
-    .AllowAnyMethod()
-    .WithExposedHeaders("Retry-After")));
+
 
 builder.Services
     .AddControllers()
@@ -68,8 +63,6 @@ else
 // Orden importa: CORS antes de auth (el preflight OPTIONS no lleva token)
 app.UseCors(CorsExtensions.FrontendPolicy);
 app.UseRateLimiter();
-app.UseHttpsRedirection();
-app.UseCors(FrontendCors);
 app.UseAuthentication();
 app.UseAuthorization();
 
