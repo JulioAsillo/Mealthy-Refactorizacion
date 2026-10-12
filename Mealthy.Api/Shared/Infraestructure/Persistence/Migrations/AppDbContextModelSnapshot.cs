@@ -22,6 +22,181 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Product", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("photo_url");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("price");
+
+                    b.Property<int>("Stock")
+                        .HasColumnType("integer")
+                        .HasColumnName("stock");
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("integer")
+                        .HasColumnName("store_id");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_products");
+
+                    b.HasIndex("Category")
+                        .HasDatabaseName("ix_products_category");
+
+                    b.HasIndex("StoreId")
+                        .HasDatabaseName("ix_products_store_id");
+
+                    b.ToTable("products", (string)null);
+                });
+
+            modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Store", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("owner_id");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("photo_url");
+
+                    b.Property<string>("Ruc")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("character(11)")
+                        .HasColumnName("ruc")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_stores");
+
+                    b.HasIndex("OwnerId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_stores_owner_id");
+
+                    b.HasIndex("Ruc")
+                        .IsUnique()
+                        .HasDatabaseName("ix_stores_ruc");
+
+                    b.ToTable("stores", (string)null);
+                });
+
+            modelBuilder.Entity("Mealthy.Api.Pantry.Domain.Model.Supply", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly?>("ExpiresOn")
+                        .HasColumnType("date")
+                        .HasColumnName("expires_on");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_supplies");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_supplies_user_id");
+
+                    b.ToTable("supplies", (string)null);
+                });
+
             modelBuilder.Entity("Mealthy.Api.Recipes.Domain.Model.Ingredient", b =>
                 {
                     b.Property<int>("Id")
@@ -238,6 +413,36 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .HasDatabaseName("ix_users_username");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Product", b =>
+                {
+                    b.HasOne("Mealthy.Api.Marketplace.Domain.Model.Store", null)
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_products_store_store_id");
+                });
+
+            modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Store", b =>
+                {
+                    b.HasOne("Mealthy.Api.Security.Domain.Model.User", null)
+                        .WithOne()
+                        .HasForeignKey("Mealthy.Api.Marketplace.Domain.Model.Store", "OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stores_user_owner_id");
+                });
+
+            modelBuilder.Entity("Mealthy.Api.Pantry.Domain.Model.Supply", b =>
+                {
+                    b.HasOne("Mealthy.Api.Security.Domain.Model.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_supplies_user_user_id");
                 });
 
             modelBuilder.Entity("Mealthy.Api.Recipes.Domain.Model.Ingredient", b =>
