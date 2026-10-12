@@ -11,6 +11,8 @@ public static class AuthMappings
 
     public static SignInCommand ToCommand(this SignInRequest r) => new(r.Email, r.Password);
 
+    public static RefreshTokenCommand ToCommand(this RefreshTokenRequest r) => new(r.RefreshToken);
+
     public static AuthResponse ToResponse(this AuthResult r) =>
-        new(r.Token.Token, r.Token.ExpiresAt, r.User.ToResponse());
+        new(r.Token.Token, r.Token.ExpiresAt, r.RefreshToken, r.RefreshTokenExpiresAt, r.User.ToResponse());
 }

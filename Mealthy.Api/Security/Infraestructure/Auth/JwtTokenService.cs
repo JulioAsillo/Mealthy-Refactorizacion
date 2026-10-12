@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Mealthy.Api.Security.Application.Contracts;
 using Mealthy.Api.Security.Application.Results;
@@ -37,4 +38,15 @@ public class JwtTokenService(IOptions<JwtOptions> options, TimeProvider clock) :
 
         return new AccessToken(Handler.CreateToken(descriptor), expires);
     }
+
+    public GeneratedRefreshToken CreateRefreshToken()
+    {
+        // 64 bytes criptográficamente aleatorios → no adivinable, no es un JWT
+        var token = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(64));
+        var expires = clock.GetUtcNow().UtcDateTime.AddDays(_opt.RefreshTokenDays);
+        return new GeneratedRefreshToken(token, HashRefreshToken(token), expires);
+    }
+
+    public string HashRefreshToken(string token)
+        => Base64UrlEncoder.Encode(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
 }
