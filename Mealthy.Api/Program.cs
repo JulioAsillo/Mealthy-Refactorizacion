@@ -3,6 +3,7 @@ using Mealthy.Api.Marketplace;
 using Mealthy.Api.Pantry;
 using Mealthy.Api.Recipes;
 using Mealthy.Api.Security;
+using Mealthy.Api.Security.Infraestructure.Persistence;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling;
 using Mealthy.Api.Shared.Infraestructure.OpenApi;
@@ -68,6 +69,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapApiHealthChecks();
+await app.SeedAdminAsync();
 
 app.Run();
 
