@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Mealthy.Api.Recipes;
 using Mealthy.Api.Security;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling;
@@ -30,6 +31,7 @@ builder.Services.AddScoped<IUnitOfWorks, UnitOfWork>();
 
 // ---------- Bounded contexts ----------
 builder.Services.AddSecurityModule(builder.Configuration);
+builder.Services.AddRecipesModule();
 
 var app = builder.Build();
 

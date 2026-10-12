@@ -5,7 +5,7 @@ namespace Mealthy.Api.Recipes.Domain.Model;
 
 public class Recipe : Entity
 {
-    private readonly List<Ingredient> _ingredients;
+    private readonly List<Ingredient> _ingredients = [];
     private readonly List<Step> _steps = [];
 
     public string Title { get; private set; } = null!;

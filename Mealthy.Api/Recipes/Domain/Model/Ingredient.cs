@@ -1,7 +1,7 @@
-
-namespace Mealthy.Api.Recipes.Domain.Model;
 using Mealthy.Api.Shared.Domain.Model;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
+
+namespace Mealthy.Api.Recipes.Domain.Model;
 
 public class Ingredient : Entity
 {
