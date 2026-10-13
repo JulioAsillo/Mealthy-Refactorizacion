@@ -15,7 +15,10 @@ public static class RateLimitingExtensions
     /// Rate limiting nativo de ASP.NET Core. Exceder el límite → 429 + Retry-After.
     ///  - "auth": 10 peticiones/min por IP, para frenar fuerza bruta en sign-in / sign-up / refresh.
     ///  - "uploads": 30 URLs de subida/min por usuario (por IP si no hay token), para que nadie
-    ///    llene el storage. Requiere UseRateLimiter() DESPUÉS de UseAuthentication() para conocer al usuario.
+    ///    llene el storage.
+    ///  - Global: toda escritura (POST/PUT/PATCH/DELETE) comparte un token bucket de 60/min por usuario.
+    ///    Las lecturas no se limitan aquí (las protege el output cache).
+    /// Requiere UseRateLimiter() DESPUÉS de UseAuthentication() para conocer al usuario.
     /// </summary>
     public static IServiceCollection AddApiRateLimiting(this IServiceCollection services)
     {
@@ -33,15 +36,25 @@ public static class RateLimitingExtensions
                 }));
 
             o.AddPolicy(UploadPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
-                partitionKey: http.User.FindFirstValue(JwtRegisteredClaimNames.Sub) is { } userId
-                    ? $"user:{userId}"
-                    : $"ip:{http.Connection.RemoteIpAddress}",
+                partitionKey: UserOrIp(http),
                 factory: _ => new FixedWindowRateLimiterOptions
                 {
                     PermitLimit = 30,
                     Window = TimeSpan.FromMinutes(1),
                     QueueLimit = 0
                 }));
+
+            o.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(http =>
+                IsWrite(http.Request.Method)
+                    ? RateLimitPartition.GetTokenBucketLimiter(UserOrIp(http), _ => new TokenBucketRateLimiterOptions
+                    {
+                        TokenLimit = 60,                       // ráfaga máxima
+                        TokensPerPeriod = 60,
+                        ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true
+                    })
+                    : RateLimitPartition.GetNoLimiter("reads"));
 
             // Respuesta 429 como ProblemDetails + header Retry-After
             o.OnRejected = async (ctx, ct) =>
@@ -65,4 +78,13 @@ public static class RateLimitingExtensions
 
         return services;
     }
+
+    private static string UserOrIp(HttpContext http)
+        => http.User.FindFirstValue(JwtRegisteredClaimNames.Sub) is { } userId
+            ? $"user:{userId}"
+            : $"ip:{http.Connection.RemoteIpAddress}";
+
+    private static bool IsWrite(string method)
+        => HttpMethods.IsPost(method) || HttpMethods.IsPut(method)
+           || HttpMethods.IsPatch(method) || HttpMethods.IsDelete(method);
 }

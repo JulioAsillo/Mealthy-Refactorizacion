@@ -2,7 +2,6 @@ using Mealthy.Api.Recipes.Application.Services;
 using Mealthy.Api.Recipes.Interfaces.Rest.Mappings;
 using Mealthy.Api.Recipes.Interfaces.Rest.Resources;
 using Mealthy.Api.Shared.Infraestructure.Web;
-using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +31,7 @@ public class RecipeStepsController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StepResponse>> Add(int recipeId, StepRequest req, CancellationToken ct)
     {
-        var step = await recipes.AddStepAsync(recipeId, User.GetUserId(), req.ToCommand(), ct);
+        var step = await recipes.AddStepAsync(recipeId, req.ToCommand(), ct);
         return CreatedAtAction(nameof(List), new { recipeId }, step.ToResponse());
     }
 
@@ -42,7 +41,7 @@ public class RecipeStepsController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StepResponse>> Update(int recipeId, int id, StepRequest req, CancellationToken ct)
-        => Ok((await recipes.UpdateStepAsync(recipeId, id, User.GetUserId(), req.ToCommand(), ct)).ToResponse());
+        => Ok((await recipes.UpdateStepAsync(recipeId, id, req.ToCommand(), ct)).ToResponse());
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -50,7 +49,7 @@ public class RecipeStepsController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int recipeId, int id, CancellationToken ct)
     {
-        await recipes.RemoveStepAsync(recipeId, id, User.GetUserId(), ct);
+        await recipes.RemoveStepAsync(recipeId, id, ct);
         return NoContent();
     }
 }

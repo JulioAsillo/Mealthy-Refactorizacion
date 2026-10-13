@@ -62,5 +62,5 @@ public class StoresController(StoreService stores) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StoreResponse>> Update(int id, UpdateStoreRequest req, CancellationToken ct)
-        => Ok((await stores.UpdateAsync(id, User.GetUserId(), req.ToCommand(), ct)).ToResponse());
+        => Ok((await stores.UpdateAsync(id, req.ToCommand(), ct)).ToResponse());
 }

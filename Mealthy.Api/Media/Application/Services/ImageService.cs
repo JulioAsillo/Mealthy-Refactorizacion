@@ -3,6 +3,7 @@ using Mealthy.Api.Media.Application.Contracts;
 using Mealthy.Api.Media.Application.Results;
 using Mealthy.Api.Media.Domain.Model;
 using Mealthy.Api.Media.Domain.Repositories;
+using Mealthy.Api.Shared.Application.Authorization;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -20,6 +21,7 @@ namespace Mealthy.Api.Media.Application.Services;
 public class ImageService(
     IImageRepository images,
     IImageStorage storage,
+    IResourceAuthorizer authorizer,
     IUnitOfWorks unitOfWork,
     IOptions<MediaOptions> options,
     HybridCache cache,
@@ -56,12 +58,11 @@ public class ImageService(
         return new ImageUpload(image, target, expiresAt);
     }
 
-    public async Task<Image> CompleteUploadAsync(int id, int userId, CancellationToken ct = default)
+    public async Task<Image> CompleteUploadAsync(int id, CancellationToken ct = default)
     {
         var image = await images.FindByIdAsync(id, ct)
                     ?? throw new NotFoundException($"Imagen {id} no encontrada.");
-        if (!image.IsOwnedBy(userId))
-            throw new ForbiddenException("Solo quien subió la imagen puede confirmarla.");
+        await authorizer.EnsureAsync(image, ResourceAction.Manage, ct);   // solo quien la subió
 
         if (image.Status != ImageStatus.AwaitingUpload)
             return image;   // idempotente: un doble clic no encola dos veces

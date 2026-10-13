@@ -55,7 +55,8 @@ builder.Services.AddMarketplaceModule();
 
 var app = builder.Build();
 
-app.UseResponseCompression();   // primero: comprime todo lo que salga, incluidas respuestas del caché
+app.UseSecurityHeaders();       // nosniff, DENY, CSP… también en errores y respuestas del caché
+app.UseResponseCompression();   // comprime todo lo que salga, incluidas respuestas del caché
 app.UseExceptionHandler();
 app.UseStatusCodePages();   // 401/403 del pipeline de auth también salen como ProblemDetails
 
@@ -67,6 +68,7 @@ if (app.Environment.IsDevelopment())
 else
 {
     // En dev no: un redirect 307 a https rompe el preflight CORS del frontend en http
+    app.UseHsts();                  // el navegador recordará usar solo HTTPS
     app.UseHttpsRedirection();
 }
 

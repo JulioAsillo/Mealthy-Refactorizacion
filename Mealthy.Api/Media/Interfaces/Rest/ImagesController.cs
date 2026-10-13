@@ -37,7 +37,7 @@ public class ImagesController(ImageService images) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ImageResponse>> Complete(int id, CancellationToken ct)
     {
-        var image = await images.CompleteUploadAsync(id, User.GetUserId(), ct);
+        var image = await images.CompleteUploadAsync(id, ct);
         return AcceptedAtAction(nameof(GetById), new { id }, image.ToResponse());
     }
 

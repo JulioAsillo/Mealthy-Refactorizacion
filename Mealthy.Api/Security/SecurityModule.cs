@@ -5,7 +5,9 @@ using Mealthy.Api.Security.Domain.Model;
 using Mealthy.Api.Security.Domain.Repositories;
 using Mealthy.Api.Security.Infraestructure.Auth;
 using Mealthy.Api.Security.Infraestructure.Persistence;
+using Mealthy.Api.Shared.Application.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
@@ -56,6 +58,11 @@ public static class SecurityModule
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<AuthService>();
         services.AddScoped<UserService>();
+
+        // Autorización por recurso (dueño / Admin) para todos los contextos
+        services.AddHttpContextAccessor();
+        services.AddSingleton<IAuthorizationHandler, OwnedResourceAuthorizationHandler>();
+        services.AddScoped<IResourceAuthorizer, HttpContextResourceAuthorizer>();
 
         return services;
     }

@@ -3,7 +3,7 @@ using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
 namespace Mealthy.Api.Recipes.Domain.Model;
 
-public class Recipe : Entity
+public class Recipe : Entity, IOwnedResource
 {
     private readonly List<Ingredient> _ingredients = [];
     private readonly List<Step> _steps = [];

@@ -3,12 +3,17 @@ using Mealthy.Api.Marketplace.Domain.Model;
 using Mealthy.Api.Marketplace.Domain.Repositories;
 using Mealthy.Api.Media.Application.Contracts;
 using Mealthy.Api.Shared.Application;
+using Mealthy.Api.Shared.Application.Authorization;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
 namespace Mealthy.Api.Marketplace.Application.Services;
 
-public class StoreService(IStoreRepository stores, IImageAttachmentValidator images, IUnitOfWorks unitOfWork)
+public class StoreService(
+    IStoreRepository stores,
+    IImageAttachmentValidator images,
+    IResourceAuthorizer authorizer,
+    IUnitOfWorks unitOfWork)
 {
     public async Task<PagedResult<Store>> ListAsync(int page, int pageSize, string? search, CancellationToken ct = default)
     {
@@ -38,13 +43,12 @@ public class StoreService(IStoreRepository stores, IImageAttachmentValidator ima
         return store;
     }
 
-    public async Task<Store> UpdateAsync(int id, int userId, UpdateStoreCommand cmd, CancellationToken ct = default)
+    public async Task<Store> UpdateAsync(int id, UpdateStoreCommand cmd, CancellationToken ct = default)
     {
         var store = await GetAsync(id, ct);   // FindByIdAsync del base trackea
-        if (!store.IsOwnedBy(userId))
-            throw new ForbiddenException("Solo el dueño puede modificar esta tienda.");
+        await authorizer.EnsureAsync(store, ResourceAction.Manage, ct);
         if (cmd.ImageId != store.ImageId)
-            await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
+            await images.EnsureAttachableAsync(cmd.ImageId, store.OwnerId, ct);
 
         store.Update(cmd.Name, cmd.Description, cmd.ImageId);
         await unitOfWork.CompleteAsync(ct);

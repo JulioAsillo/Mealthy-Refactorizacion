@@ -2,7 +2,6 @@ using Mealthy.Api.Recipes.Application.Services;
 using Mealthy.Api.Recipes.Interfaces.Rest.Mappings;
 using Mealthy.Api.Recipes.Interfaces.Rest.Resources;
 using Mealthy.Api.Shared.Infraestructure.Web;
-using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +31,7 @@ public class RecipeIngredientsController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IngredientResponse>> Add(int recipeId, IngredientRequest req, CancellationToken ct)
     {
-        var ingredient = await recipes.AddIngredientAsync(recipeId, User.GetUserId(), req.ToCommand(), ct);
+        var ingredient = await recipes.AddIngredientAsync(recipeId, req.ToCommand(), ct);
         return CreatedAtAction(nameof(List), new { recipeId }, ingredient.ToResponse());
     }
 
@@ -42,7 +41,7 @@ public class RecipeIngredientsController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<IngredientResponse>> Update(int recipeId, int id, IngredientRequest req, CancellationToken ct)
-        => Ok((await recipes.UpdateIngredientAsync(recipeId, id, User.GetUserId(), req.ToCommand(), ct)).ToResponse());
+        => Ok((await recipes.UpdateIngredientAsync(recipeId, id, req.ToCommand(), ct)).ToResponse());
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -50,7 +49,7 @@ public class RecipeIngredientsController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int recipeId, int id, CancellationToken ct)
     {
-        await recipes.RemoveIngredientAsync(recipeId, id, User.GetUserId(), ct);
+        await recipes.RemoveIngredientAsync(recipeId, id, ct);
         return NoContent();
     }
 }

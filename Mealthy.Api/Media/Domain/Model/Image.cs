@@ -8,7 +8,7 @@ namespace Mealthy.Api.Media.Domain.Model;
 /// Metadatos de una imagen subida. El binario NUNCA vive en PostgreSQL: está en Blob Storage
 /// (contenedor "images", una carpeta por Key con sus variantes WebP).
 /// </summary>
-public class Image : Entity
+public class Image : Entity, IOwnedResource
 {
     /// <summary>Identificador público del blob. Guid v7: no adivinable y ordenable por fecha.</summary>
     public Guid Key { get; private set; }

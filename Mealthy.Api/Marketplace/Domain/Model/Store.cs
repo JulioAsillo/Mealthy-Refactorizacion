@@ -3,7 +3,7 @@ using Mealthy.Api.Shared.Domain.Model;
 namespace Mealthy.Api.Marketplace.Domain.Model;
 
 /// <summary>Tienda (antes "Market"). Modelo A: un StoreOwner posee exactamente una tienda.</summary>
-public class Store : Entity
+public class Store : Entity, IOwnedResource
 {
     public string Name { get; private set; } = null!;
     public string Description { get; private set; } = null!;

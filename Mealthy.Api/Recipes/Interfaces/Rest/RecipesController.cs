@@ -53,7 +53,7 @@ public class RecipesController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecipeDetailResponse>> Update(int id, UpdateRecipeRequest req, CancellationToken ct)
-        => Ok((await recipes.UpdateAsync(id, User.GetUserId(), req.ToCommand(), ct)).ToDetailResponse());
+        => Ok((await recipes.UpdateAsync(id, req.ToCommand(), ct)).ToDetailResponse());
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -61,7 +61,7 @@ public class RecipesController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        await recipes.DeleteAsync(id, User.GetUserId(), ct);
+        await recipes.DeleteAsync(id, ct);
         return NoContent();
     }
 }

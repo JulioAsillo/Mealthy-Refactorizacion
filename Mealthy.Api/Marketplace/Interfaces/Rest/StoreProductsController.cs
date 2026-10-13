@@ -4,7 +4,6 @@ using Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 using Mealthy.Api.Security.Infraestructure.Auth;
 using Mealthy.Api.Shared.Application;
 using Mealthy.Api.Shared.Infraestructure.Web;
-using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +13,7 @@ namespace Mealthy.Api.Marketplace.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/stores/{storeId:int}/products")]
-[Authorize(Policy = AuthPolicies.StoreOwnerOnly)]
+[Authorize]
 [EvictCacheTags(CacheTags.Products)]
 [Produces("application/json")]
 public class StoreProductsController(ProductService products) : ControllerBase
@@ -34,32 +33,35 @@ public class StoreProductsController(ProductService products) : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.StoreOwnerOnly)]
     [ProducesResponseType<ProductResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductResponse>> Create(int storeId, ProductRequest req, CancellationToken ct)
     {
-        var product = await products.CreateAsync(storeId, User.GetUserId(), req.ToCommand(), ct);
+        var product = await products.CreateAsync(storeId, req.ToCommand(), ct);
         // Location apunta a GET /api/v1/products/{id}
         return CreatedAtAction(nameof(ProductsController.GetById), "Products", new { id = product.Id }, product.ToResponse());
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Policy = AuthPolicies.StoreOwnerOnly)]
     [ProducesResponseType<ProductResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductResponse>> Update(int storeId, int id, ProductRequest req, CancellationToken ct)
-        => Ok((await products.UpdateAsync(storeId, id, User.GetUserId(), req.ToCommand(), ct)).ToResponse());
+        => Ok((await products.UpdateAsync(storeId, id, req.ToCommand(), ct)).ToResponse());
 
+    /// <summary>Dueño de la tienda o Admin (moderación). Lo decide la autorización por recurso.</summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int storeId, int id, CancellationToken ct)
     {
-        await products.DeleteAsync(storeId, id, User.GetUserId(), ct);
+        await products.DeleteAsync(storeId, id, ct);
         return NoContent();
     }
 }

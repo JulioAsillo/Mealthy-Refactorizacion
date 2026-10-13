@@ -3,6 +3,7 @@ using Mealthy.Api.Marketplace.Domain.Model;
 using Mealthy.Api.Marketplace.Domain.Repositories;
 using Mealthy.Api.Media.Application.Contracts;
 using Mealthy.Api.Shared.Application;
+using Mealthy.Api.Shared.Application.Authorization;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
@@ -12,6 +13,7 @@ public class ProductService(
     IProductRepository products,
     IStoreRepository stores,
     IImageAttachmentValidator images,
+    IResourceAuthorizer authorizer,
     IUnitOfWorks unitOfWork)
 {
     // ---------- Lecturas (públicas) ----------
@@ -37,12 +39,12 @@ public class ProductService(
         => await products.GetByIdReadOnlyAsync(id, ct)
            ?? throw new NotFoundException($"Producto {id} no encontrado.");
 
-    // ---------- Escrituras (solo el dueño de la tienda) ----------
+    // ---------- Escrituras (dueño de la tienda; eliminar también un Admin) ----------
 
-    public async Task<Product> CreateAsync(int storeId, int userId, ProductCommand cmd, CancellationToken ct = default)
+    public async Task<Product> CreateAsync(int storeId, ProductCommand cmd, CancellationToken ct = default)
     {
-        await EnsureStoreOwnerAsync(storeId, userId, ct);
-        await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
+        var store = await LoadAuthorizedStoreAsync(storeId, ResourceAction.Manage, ct);
+        await images.EnsureAttachableAsync(cmd.ImageId, store.OwnerId, ct);
 
         var product = new Product(storeId, cmd.Name, cmd.Category, cmd.Price, cmd.Unit, cmd.Stock, cmd.ImageId);
         await products.AddAsync(product, ct);
@@ -50,21 +52,21 @@ public class ProductService(
         return product;
     }
 
-    public async Task<Product> UpdateAsync(int storeId, int id, int userId, ProductCommand cmd, CancellationToken ct = default)
+    public async Task<Product> UpdateAsync(int storeId, int id, ProductCommand cmd, CancellationToken ct = default)
     {
-        await EnsureStoreOwnerAsync(storeId, userId, ct);
+        var store = await LoadAuthorizedStoreAsync(storeId, ResourceAction.Manage, ct);
         var product = await LoadInStoreAsync(storeId, id, ct);
         if (cmd.ImageId != product.ImageId)   // solo se valida la foto nueva
-            await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
+            await images.EnsureAttachableAsync(cmd.ImageId, store.OwnerId, ct);
 
         product.Update(cmd.Name, cmd.Category, cmd.Price, cmd.Unit, cmd.Stock, cmd.ImageId);
         await unitOfWork.CompleteAsync(ct);
         return product;
     }
 
-    public async Task DeleteAsync(int storeId, int id, int userId, CancellationToken ct = default)
+    public async Task DeleteAsync(int storeId, int id, CancellationToken ct = default)
     {
-        await EnsureStoreOwnerAsync(storeId, userId, ct);
+        await LoadAuthorizedStoreAsync(storeId, ResourceAction.Delete, ct);   // dueño o Admin
         var product = await LoadInStoreAsync(storeId, id, ct);
 
         products.Remove(product);
@@ -73,13 +75,14 @@ public class ProductService(
 
     // ---------- Privados ----------
 
-    private async Task EnsureStoreOwnerAsync(int storeId, int userId, CancellationToken ct)
+    /// <summary>Un producto no tiene dueño propio: el permiso se decide sobre su tienda.</summary>
+    private async Task<Store> LoadAuthorizedStoreAsync(int storeId, ResourceAction action, CancellationToken ct)
     {
         var store = await stores.FindByIdAsync(storeId, ct)
                     ?? throw new NotFoundException($"Tienda {storeId} no encontrada.");
 
-        if (!store.IsOwnedBy(userId))
-            throw new ForbiddenException("Solo el dueño de la tienda puede gestionar sus productos.");
+        await authorizer.EnsureAsync(store, action, ct);
+        return store;
     }
 
     private async Task<Product> LoadInStoreAsync(int storeId, int id, CancellationToken ct)
