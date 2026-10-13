@@ -10,12 +10,12 @@ public static class RecipeMappings
     // ---------- Request → Command ----------
 
     public static CreateRecipeCommand ToCommand(this CreateRecipeRequest r) =>
-        new(r.Title, r.Description, r.PreparationMinutes, r.Servings, r.PhotoUrl,
+        new(r.Title, r.Description, r.PreparationMinutes, r.Servings, r.ImageId,
             (r.Ingredients ?? []).Select(i => i.ToCommand()).ToList(),
             (r.Steps ?? []).Select(s => s.ToCommand()).ToList());
 
     public static UpdateRecipeCommand ToCommand(this UpdateRecipeRequest r) =>
-        new(r.Title, r.Description, r.PreparationMinutes, r.Servings, r.PhotoUrl);
+        new(r.Title, r.Description, r.PreparationMinutes, r.Servings, r.ImageId);
 
     public static IngredientCommand ToCommand(this IngredientRequest r) => new(r.Name, r.Quantity, r.Unit);
 
@@ -28,10 +28,10 @@ public static class RecipeMappings
     public static StepResponse ToResponse(this Step s) => new(s.Id, s.Order, s.Description);
 
     public static RecipeSummaryResponse ToSummaryResponse(this Recipe r) =>
-        new(r.Id, r.Title, r.Description, r.PreparationMinutes, r.Servings, r.PhotoUrl, r.AuthorId, r.CreatedAt);
+        new(r.Id, r.Title, r.Description, r.PreparationMinutes, r.Servings, r.ImageId, r.AuthorId, r.CreatedAt);
 
     public static RecipeDetailResponse ToDetailResponse(this Recipe r) =>
-        new(r.Id, r.Title, r.Description, r.PreparationMinutes, r.Servings, r.PhotoUrl, r.AuthorId,
+        new(r.Id, r.Title, r.Description, r.PreparationMinutes, r.Servings, r.ImageId, r.AuthorId,
             r.CreatedAt, r.UpdatedAt,
             r.Ingredients.Select(i => i.ToResponse()).ToList(),
             r.Steps.OrderBy(s => s.Order).Select(s => s.ToResponse()).ToList());

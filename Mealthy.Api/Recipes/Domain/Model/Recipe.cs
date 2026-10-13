@@ -13,7 +13,8 @@ public class Recipe : Entity
 
     public int PreparationMinutes { get; private set; }
     public int Servings { get; private set; }
-    public string? PhotoUrl { get; private set; }
+    /// <summary>FK a images.id (contexto Media). El binario vive en Blob Storage, no en la BD.</summary>
+    public int? ImageId { get; private set; }
 
     /// <summary>FK a users.id. Sin propiedad de navegación: Recipes no depende del modelo de Security.</summary>
     public int AuthorId { get; private set; }
@@ -25,14 +26,14 @@ public class Recipe : Entity
     private Recipe() { }
 
     public Recipe(int authorId, string title, string description,
-        int preparationMinutes, int servings, string? photoUrl)
+        int preparationMinutes, int servings, int? imageId)
     {
         AuthorId = authorId;
-        SetDetails(title, description, preparationMinutes, servings, photoUrl);
+        SetDetails(title, description, preparationMinutes, servings, imageId);
     }
 
-    public void Update(string title, string description, int preparationMinutes, int servings, string? photoUrl)
-        => SetDetails(title, description, preparationMinutes, servings, photoUrl);
+    public void Update(string title, string description, int preparationMinutes, int servings, int? imageId)
+        => SetDetails(title, description, preparationMinutes, servings, imageId);
 
     public bool IsOwnedBy(int userId) => AuthorId == userId;
 
@@ -76,7 +77,7 @@ public class Recipe : Entity
     }
 
     // ---------- Privados ----------
-    private void SetDetails(string title, string description, int preparationMinutes, int servings, string? photoUrl)
+    private void SetDetails(string title, string description, int preparationMinutes, int servings, int? imageId)
     {
         if (preparationMinutes <= 0)
             throw new BusinessRuleException("El tiempo de preparación debe ser mayor a 0 minutos.");
@@ -87,7 +88,7 @@ public class Recipe : Entity
         Description = description.Trim();
         PreparationMinutes = preparationMinutes;
         Servings = servings;
-        PhotoUrl = string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim();
+        ImageId = imageId;
     }
 
     private void Resequence()

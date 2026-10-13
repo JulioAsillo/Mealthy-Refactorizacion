@@ -11,7 +11,7 @@ public record RecipeSummaryResponse(
     string Description,
     int PreparationMinutes,
     int Servings,
-    string? PhotoUrl,
+    int? ImageId,               // GET /api/v1/images/{ImageId}/content?size=sm|md|lg
     int AuthorId,
     DateTime CreatedAt);
 
@@ -22,7 +22,7 @@ public record RecipeDetailResponse(
     string Description,
     int PreparationMinutes,
     int Servings,
-    string? PhotoUrl,
+    int? ImageId,               // GET /api/v1/images/{ImageId}/content?size=sm|md|lg
     int AuthorId,
     DateTime CreatedAt,
     DateTime? UpdatedAt,

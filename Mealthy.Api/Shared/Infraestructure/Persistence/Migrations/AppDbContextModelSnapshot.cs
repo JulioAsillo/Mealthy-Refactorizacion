@@ -41,16 +41,15 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("integer")
+                        .HasColumnName("image_id");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)")
                         .HasColumnName("name");
-
-                    b.Property<string>("PhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("photo_url");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
@@ -81,6 +80,9 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                     b.HasIndex("Category")
                         .HasDatabaseName("ix_products_category");
 
+                    b.HasIndex("ImageId")
+                        .HasDatabaseName("ix_products_image_id");
+
                     b.HasIndex("StoreId")
                         .HasDatabaseName("ix_products_store_id");
 
@@ -106,6 +108,10 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .HasColumnType("character varying(1000)")
                         .HasColumnName("description");
 
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("integer")
+                        .HasColumnName("image_id");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -115,11 +121,6 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                     b.Property<int>("OwnerId")
                         .HasColumnType("integer")
                         .HasColumnName("owner_id");
-
-                    b.Property<string>("PhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("photo_url");
 
                     b.Property<string>("Ruc")
                         .IsRequired()
@@ -135,6 +136,9 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_stores");
 
+                    b.HasIndex("ImageId")
+                        .HasDatabaseName("ix_stores_image_id");
+
                     b.HasIndex("OwnerId")
                         .IsUnique()
                         .HasDatabaseName("ix_stores_owner_id");
@@ -144,6 +148,88 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .HasDatabaseName("ix_stores_ruc");
 
                     b.ToTable("stores", (string)null);
+                });
+
+            modelBuilder.Entity("Mealthy.Api.Media.Domain.Model.Image", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long>("DeclaredSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("declared_size_bytes");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<int?>("Height")
+                        .HasColumnType("integer")
+                        .HasColumnName("height");
+
+                    b.Property<Guid>("Key")
+                        .HasColumnType("uuid")
+                        .HasColumnName("key");
+
+                    b.Property<int>("OwnerId")
+                        .HasColumnType("integer")
+                        .HasColumnName("owner_id");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<long?>("StoredSizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("stored_size_bytes");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateTime?>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.Property<int?>("Width")
+                        .HasColumnType("integer")
+                        .HasColumnName("width");
+
+                    b.HasKey("Id")
+                        .HasName("pk_images");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_images_created_at");
+
+                    b.HasIndex("Key")
+                        .IsUnique()
+                        .HasDatabaseName("ix_images_key");
+
+                    b.HasIndex("OwnerId")
+                        .HasDatabaseName("ix_images_owner_id");
+
+                    b.ToTable("images", (string)null);
                 });
 
             modelBuilder.Entity("Mealthy.Api.Pantry.Domain.Model.Supply", b =>
@@ -267,10 +353,9 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .HasColumnType("character varying(2000)")
                         .HasColumnName("description");
 
-                    b.Property<string>("PhotoUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("photo_url");
+                    b.Property<int?>("ImageId")
+                        .HasColumnType("integer")
+                        .HasColumnName("image_id");
 
                     b.Property<int>("PreparationMinutes")
                         .HasColumnType("integer")
@@ -295,6 +380,9 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
 
                     b.HasIndex("AuthorId")
                         .HasDatabaseName("ix_recipes_author_id");
+
+                    b.HasIndex("ImageId")
+                        .HasDatabaseName("ix_recipes_image_id");
 
                     b.ToTable("recipes", (string)null);
                 });
@@ -470,6 +558,12 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
 
             modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Product", b =>
                 {
+                    b.HasOne("Mealthy.Api.Media.Domain.Model.Image", null)
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_products_image_image_id");
+
                     b.HasOne("Mealthy.Api.Marketplace.Domain.Model.Store", null)
                         .WithMany()
                         .HasForeignKey("StoreId")
@@ -480,6 +574,12 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
 
             modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Store", b =>
                 {
+                    b.HasOne("Mealthy.Api.Media.Domain.Model.Image", null)
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_stores_image_image_id");
+
                     b.HasOne("Mealthy.Api.Security.Domain.Model.User", null)
                         .WithOne()
                         .HasForeignKey("Mealthy.Api.Marketplace.Domain.Model.Store", "OwnerId")
@@ -516,6 +616,12 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_recipes_user_author_id");
+
+                    b.HasOne("Mealthy.Api.Media.Domain.Model.Image", null)
+                        .WithMany()
+                        .HasForeignKey("ImageId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_recipes_images_image_id");
                 });
 
             modelBuilder.Entity("Mealthy.Api.Recipes.Domain.Model.Step", b =>

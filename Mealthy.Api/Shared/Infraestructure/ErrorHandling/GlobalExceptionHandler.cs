@@ -20,6 +20,9 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger,
             // Carrera entre el ExistsBy... y el INSERT: el índice único de Postgres (23505) responde
             Microsoft.EntityFrameworkCore.DbUpdateException { InnerException: Npgsql.PostgresException { SqlState: "23505" } }
                                    => (StatusCodes.Status409Conflict, "Conflicto"),
+            // Borrar algo que otras filas referencian con ON DELETE RESTRICT (23503), p. ej. un usuario con recetas
+            Microsoft.EntityFrameworkCore.DbUpdateException { InnerException: Npgsql.PostgresException { SqlState: "23503" } }
+                                   => (StatusCodes.Status409Conflict, "Tiene datos asociados"),
             _                      => (StatusCodes.Status500InternalServerError, "Error interno")
         };
 

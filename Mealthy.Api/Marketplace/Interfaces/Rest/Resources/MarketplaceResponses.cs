@@ -5,7 +5,8 @@ public record StoreResponse(
     string Name,
     string Description,
     string Ruc,
-    string? PhotoUrl,
+    // Foto: GET /api/v1/images/{ImageId}/content?size=sm|md|lg
+    int? ImageId,
     int OwnerId,
     DateTime CreatedAt);
 
@@ -17,6 +18,7 @@ public record ProductResponse(
     decimal Price,
     string Unit,
     int Stock,
-    string? PhotoUrl,
+    // Foto: GET /api/v1/images/{ImageId}/content?size=sm|md|lg
+    int? ImageId,
     DateTime CreatedAt,
     DateTime? UpdatedAt);

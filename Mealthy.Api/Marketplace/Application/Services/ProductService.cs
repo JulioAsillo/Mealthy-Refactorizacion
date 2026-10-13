@@ -1,13 +1,18 @@
 using Mealthy.Api.Marketplace.Application.Commands;
 using Mealthy.Api.Marketplace.Domain.Model;
 using Mealthy.Api.Marketplace.Domain.Repositories;
+using Mealthy.Api.Media.Application.Contracts;
 using Mealthy.Api.Shared.Application;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
 namespace Mealthy.Api.Marketplace.Application.Services;
 
-public class ProductService(IProductRepository products, IStoreRepository stores, IUnitOfWorks unitOfWork)
+public class ProductService(
+    IProductRepository products,
+    IStoreRepository stores,
+    IImageAttachmentValidator images,
+    IUnitOfWorks unitOfWork)
 {
     // ---------- Lecturas (públicas) ----------
 
@@ -37,8 +42,9 @@ public class ProductService(IProductRepository products, IStoreRepository stores
     public async Task<Product> CreateAsync(int storeId, int userId, ProductCommand cmd, CancellationToken ct = default)
     {
         await EnsureStoreOwnerAsync(storeId, userId, ct);
+        await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
 
-        var product = new Product(storeId, cmd.Name, cmd.Category, cmd.Price, cmd.Unit, cmd.Stock, cmd.PhotoUrl);
+        var product = new Product(storeId, cmd.Name, cmd.Category, cmd.Price, cmd.Unit, cmd.Stock, cmd.ImageId);
         await products.AddAsync(product, ct);
         await unitOfWork.CompleteAsync(ct);
         return product;
@@ -48,8 +54,10 @@ public class ProductService(IProductRepository products, IStoreRepository stores
     {
         await EnsureStoreOwnerAsync(storeId, userId, ct);
         var product = await LoadInStoreAsync(storeId, id, ct);
+        if (cmd.ImageId != product.ImageId)   // solo se valida la foto nueva
+            await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
 
-        product.Update(cmd.Name, cmd.Category, cmd.Price, cmd.Unit, cmd.Stock, cmd.PhotoUrl);
+        product.Update(cmd.Name, cmd.Category, cmd.Price, cmd.Unit, cmd.Stock, cmd.ImageId);
         await unitOfWork.CompleteAsync(ct);
         return product;
     }

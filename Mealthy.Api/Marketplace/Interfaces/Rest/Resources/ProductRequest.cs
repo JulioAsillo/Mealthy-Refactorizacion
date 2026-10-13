@@ -8,4 +8,4 @@ public record ProductRequest(
     [Range(0.01, 99999999.99)] decimal Price,
     [Required, StringLength(20, MinimumLength = 1)] string Unit,
     [Range(0, int.MaxValue)] int Stock,
-    [Url, StringLength(500)] string? PhotoUrl);
+    [Range(1, int.MaxValue)] int? ImageId);

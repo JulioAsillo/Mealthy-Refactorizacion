@@ -1,13 +1,14 @@
 using Mealthy.Api.Marketplace.Application.Commands;
 using Mealthy.Api.Marketplace.Domain.Model;
 using Mealthy.Api.Marketplace.Domain.Repositories;
+using Mealthy.Api.Media.Application.Contracts;
 using Mealthy.Api.Shared.Application;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
 namespace Mealthy.Api.Marketplace.Application.Services;
 
-public class StoreService(IStoreRepository stores, IUnitOfWorks unitOfWork)
+public class StoreService(IStoreRepository stores, IImageAttachmentValidator images, IUnitOfWorks unitOfWork)
 {
     public async Task<PagedResult<Store>> ListAsync(int page, int pageSize, string? search, CancellationToken ct = default)
     {
@@ -29,8 +30,9 @@ public class StoreService(IStoreRepository stores, IUnitOfWorks unitOfWork)
             throw new ConflictException("Ya tienes una tienda registrada.");
         if (await stores.ExistsByRucAsync(cmd.Ruc, ct))
             throw new ConflictException("El RUC ya está registrado por otra tienda.");
+        await images.EnsureAttachableAsync(cmd.ImageId, ownerId, ct);
 
-        var store = new Store(ownerId, cmd.Name, cmd.Description, cmd.Ruc, cmd.PhotoUrl);
+        var store = new Store(ownerId, cmd.Name, cmd.Description, cmd.Ruc, cmd.ImageId);
         await stores.AddAsync(store, ct);
         await unitOfWork.CompleteAsync(ct);
         return store;
@@ -41,8 +43,10 @@ public class StoreService(IStoreRepository stores, IUnitOfWorks unitOfWork)
         var store = await GetAsync(id, ct);   // FindByIdAsync del base trackea
         if (!store.IsOwnedBy(userId))
             throw new ForbiddenException("Solo el dueño puede modificar esta tienda.");
+        if (cmd.ImageId != store.ImageId)
+            await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
 
-        store.Update(cmd.Name, cmd.Description, cmd.PhotoUrl);
+        store.Update(cmd.Name, cmd.Description, cmd.ImageId);
         await unitOfWork.CompleteAsync(ct);
         return store;
     }

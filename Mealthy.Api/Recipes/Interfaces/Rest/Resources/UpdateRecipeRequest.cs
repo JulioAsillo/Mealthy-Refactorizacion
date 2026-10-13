@@ -8,4 +8,4 @@ public record UpdateRecipeRequest(
     [Required, StringLength(2000)] string Description,
     [Range(1, 1440)] int PreparationMinutes,
     [Range(1, 100)] int Servings,
-    [Url, StringLength(500)] string? PhotoUrl);
+    [Range(1, int.MaxValue)] int? ImageId);

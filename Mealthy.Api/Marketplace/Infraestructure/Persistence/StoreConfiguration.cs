@@ -1,4 +1,5 @@
 using Mealthy.Api.Marketplace.Domain.Model;
+using Mealthy.Api.Media.Domain.Model;
 using Mealthy.Api.Security.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -15,13 +16,17 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
         b.Property(s => s.Name).HasMaxLength(100).IsRequired();
         b.Property(s => s.Description).HasMaxLength(1000).IsRequired();
         b.Property(s => s.Ruc).HasMaxLength(11).IsFixedLength().IsRequired();
-        b.Property(s => s.PhotoUrl).HasMaxLength(500);
 
         // 1:1 con users: el índice único sobre OwnerId garantiza una tienda por dueño
         b.HasOne<User>()
             .WithOne()
             .HasForeignKey<Store>(s => s.OwnerId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        b.HasOne<Image>()
+            .WithMany()
+            .HasForeignKey(s => s.ImageId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         b.HasIndex(s => s.OwnerId).IsUnique();
         b.HasIndex(s => s.Ruc).IsUnique();

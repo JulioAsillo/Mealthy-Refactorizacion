@@ -1,3 +1,4 @@
+using Mealthy.Api.Media.Domain.Model;
 using Mealthy.Api.Recipes.Domain.Model;
 using Mealthy.Api.Security.Domain.Model;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,6 @@ public class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
         b.Property(r => r.Description).HasMaxLength(2000).IsRequired();
         b.Property(r => r.PreparationMinutes).IsRequired();
         b.Property(r => r.Servings).IsRequired();
-        b.Property(r => r.PhotoUrl).HasMaxLength(500);
 
         // FK real a users, sin navegación (Recipes no conoce el modelo de Security)
         b.HasOne<User>()
@@ -24,6 +24,12 @@ public class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
             .HasForeignKey(r => r.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(r => r.AuthorId);
+
+        // Foto: si la imagen se borra, la receta queda sin foto
+        b.HasOne<Image>()
+            .WithMany()
+            .HasForeignKey(r => r.ImageId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Agregado: Recipe es dueño de sus ingredientes y pasos
         b.HasMany(r => r.Ingredients)

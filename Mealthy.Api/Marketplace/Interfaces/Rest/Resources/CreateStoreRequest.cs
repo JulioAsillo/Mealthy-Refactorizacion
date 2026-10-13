@@ -8,4 +8,5 @@ public record CreateStoreRequest(
     // RUC peruano: 11 dígitos, empieza en 10 (persona natural), 15, 17 o 20 (persona jurídica)
     [Required, RegularExpression(@"^(10|15|17|20)\d{9}$", ErrorMessage = "RUC inválido: deben ser 11 dígitos y empezar en 10, 15, 17 o 20.")]
     string Ruc,
-    [Url, StringLength(500)] string? PhotoUrl);
+    // Id devuelto por POST /api/v1/images (opcional)
+    [Range(1, int.MaxValue)] int? ImageId);

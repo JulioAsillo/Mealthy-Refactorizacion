@@ -14,7 +14,8 @@ public class Product : Entity
     public decimal Price { get; private set; }
     public string Unit { get; private set; } = null!;
     public int Stock { get; private set; }
-    public string? PhotoUrl { get; private set; }
+    /// <summary>FK a images.id (contexto Media). El binario vive en Blob Storage, no en la BD.</summary>
+    public int? ImageId { get; private set; }
 
     /// <summary>FK real a stores.id (antes era un entero suelto).</summary>
     public int StoreId { get; private set; }
@@ -22,13 +23,13 @@ public class Product : Entity
     // Requerido por EF Core
     private Product() { }
 
-    public Product(int storeId, string name, string category, decimal price, string unit, int stock, string? photoUrl)
+    public Product(int storeId, string name, string category, decimal price, string unit, int stock, int? imageId)
     {
         StoreId = storeId;
-        Update(name, category, price, unit, stock, photoUrl);
+        Update(name, category, price, unit, stock, imageId);
     }
 
-    public void Update(string name, string category, decimal price, string unit, int stock, string? photoUrl)
+    public void Update(string name, string category, decimal price, string unit, int stock, int? imageId)
     {
         if (price <= 0)
             throw new BusinessRuleException("El precio debe ser mayor a 0.");
@@ -40,6 +41,6 @@ public class Product : Entity
         Price = decimal.Round(price, 2);
         Unit = unit.Trim();
         Stock = stock;
-        PhotoUrl = string.IsNullOrWhiteSpace(photoUrl) ? null : photoUrl.Trim();
+        ImageId = imageId;
     }
 }

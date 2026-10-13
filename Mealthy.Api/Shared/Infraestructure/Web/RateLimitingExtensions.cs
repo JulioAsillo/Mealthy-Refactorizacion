@@ -1,16 +1,21 @@
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Mealthy.Api.Shared.Infraestructure.Web;
 
 public static class RateLimitingExtensions
 {
     public const string AuthPolicy = "auth";
+    public const string UploadPolicy = "uploads";
 
     /// <summary>
-    /// Rate limiting nativo de ASP.NET Core. Política "auth": 10 peticiones por minuto por IP,
-    /// para frenar fuerza bruta en sign-in / sign-up / refresh. Exceder el límite → 429.
+    /// Rate limiting nativo de ASP.NET Core. Exceder el límite → 429 + Retry-After.
+    ///  - "auth": 10 peticiones/min por IP, para frenar fuerza bruta en sign-in / sign-up / refresh.
+    ///  - "uploads": 30 URLs de subida/min por usuario (por IP si no hay token), para que nadie
+    ///    llene el storage. Requiere UseRateLimiter() DESPUÉS de UseAuthentication() para conocer al usuario.
     /// </summary>
     public static IServiceCollection AddApiRateLimiting(this IServiceCollection services)
     {
@@ -25,6 +30,17 @@ public static class RateLimitingExtensions
                     PermitLimit = 10,
                     Window = TimeSpan.FromMinutes(1),
                     QueueLimit = 0                    // sin cola: se rechaza de inmediato
+                }));
+
+            o.AddPolicy(UploadPolicy, http => RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: http.User.FindFirstValue(JwtRegisteredClaimNames.Sub) is { } userId
+                    ? $"user:{userId}"
+                    : $"ip:{http.Connection.RemoteIpAddress}",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 30,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueLimit = 0
                 }));
 
             // Respuesta 429 como ProblemDetails + header Retry-After

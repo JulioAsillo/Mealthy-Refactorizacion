@@ -1,3 +1,4 @@
+using Mealthy.Api.Media.Application.Contracts;
 using Mealthy.Api.Recipes.Application.Commands;
 using Mealthy.Api.Recipes.Domain.Model;
 using Mealthy.Api.Recipes.Domain.Repositories;
@@ -11,7 +12,7 @@ namespace Mealthy.Api.Recipes.Application.Services;
 /// Casos de uso del agregado Recipe. Ingredientes y pasos se modifican SIEMPRE a través de Recipe,
 /// que es la raíz del agregado: no hay repositorios propios para Ingredient ni Step.
 /// </summary>
-public class RecipeService(IRecipeRepository recipes, IUnitOfWorks unitOfWork)
+public class RecipeService(IRecipeRepository recipes, IImageAttachmentValidator images, IUnitOfWorks unitOfWork)
 {
     // ---------- Lecturas (públicas) ----------
 
@@ -29,8 +30,10 @@ public class RecipeService(IRecipeRepository recipes, IUnitOfWorks unitOfWork)
 
     public async Task<Recipe> CreateAsync(int authorId, CreateRecipeCommand cmd, CancellationToken ct = default)
     {
+        await images.EnsureAttachableAsync(cmd.ImageId, authorId, ct);
+
         var recipe = new Recipe(authorId, cmd.Title, cmd.Description,
-            cmd.PreparationMinutes, cmd.Servings, cmd.PhotoUrl);
+            cmd.PreparationMinutes, cmd.Servings, cmd.ImageId);
 
         foreach (var i in cmd.Ingredients)
             recipe.AddIngredient(i.Name, i.Quantity, i.Unit);
@@ -46,7 +49,10 @@ public class RecipeService(IRecipeRepository recipes, IUnitOfWorks unitOfWork)
     public async Task<Recipe> UpdateAsync(int id, int userId, UpdateRecipeCommand cmd, CancellationToken ct = default)
     {
         var recipe = await LoadOwnedAsync(id, userId, ct);
-        recipe.Update(cmd.Title, cmd.Description, cmd.PreparationMinutes, cmd.Servings, cmd.PhotoUrl);
+        if (cmd.ImageId != recipe.ImageId)   // solo se valida la foto nueva
+            await images.EnsureAttachableAsync(cmd.ImageId, userId, ct);
+
+        recipe.Update(cmd.Title, cmd.Description, cmd.PreparationMinutes, cmd.Servings, cmd.ImageId);
         await unitOfWork.CompleteAsync(ct);   // agregado trackeado: no hace falta Update()
         return recipe;
     }

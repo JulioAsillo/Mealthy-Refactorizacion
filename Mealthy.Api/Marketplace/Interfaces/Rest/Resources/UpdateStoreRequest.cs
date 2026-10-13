@@ -6,4 +6,4 @@ namespace Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 public record UpdateStoreRequest(
     [Required, StringLength(100, MinimumLength = 2)] string Name,
     [Required, StringLength(1000)] string Description,
-    [Url, StringLength(500)] string? PhotoUrl);
+    [Range(1, int.MaxValue)] int? ImageId);

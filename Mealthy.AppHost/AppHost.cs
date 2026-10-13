@@ -15,13 +15,28 @@ var postgres = builder.AddPostgres("postgres")
 
 var db = postgres.AddDatabase("mealthy");
 
+// ---------- Azure Storage (Azurite en local) ----------
+// Blob: originales privados + variantes WebP públicas. Queue: trabajo para el worker de imágenes.
+// Mismo SDK y mismo código que contra una Storage Account real de Azure.
+var storage = builder.AddAzureStorage("storage")
+    .RunAsEmulator(azurite => azurite
+        .WithDataVolume("mealthy-azurite")
+        .WithLifetime(ContainerLifetime.Persistent));
+
+var blobs = storage.AddBlobs("blobs");
+var queues = storage.AddQueues("queues");
+
 // ---------- API ----------
 // connectionName "DefaultConnection": la API sigue leyendo GetConnectionString("DefaultConnection"),
 // así no hace falta tocar su configuración. Aspire la inyecta como variable de entorno
 // (ConnectionStrings__DefaultConnection), que tiene prioridad sobre los user-secrets de la API.
 var api = builder.AddProject<Projects.Mealthy_Api>("api")
     .WithReference(db, connectionName: "DefaultConnection")
+    .WithReference(blobs)
+    .WithReference(queues)
     .WaitFor(db)
+    .WaitFor(blobs)
+    .WaitFor(queues)
     .WithHttpHealthCheck("/health");
 
 // ---------- Frontend (repo separado: mealthy-frontend) ----------

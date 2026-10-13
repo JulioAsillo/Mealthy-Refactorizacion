@@ -1,4 +1,5 @@
 using Mealthy.Api.Marketplace.Domain.Model;
+using Mealthy.Api.Media.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,12 +17,17 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         b.Property(p => p.Price).HasPrecision(10, 2).IsRequired();   // numeric(10,2), adiós float
         b.Property(p => p.Unit).HasMaxLength(20).IsRequired();
         b.Property(p => p.Stock).IsRequired();
-        b.Property(p => p.PhotoUrl).HasMaxLength(500);
 
         b.HasOne<Store>()
             .WithMany()
             .HasForeignKey(p => p.StoreId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Si la imagen se borra, el producto queda sin foto (no se borra el producto)
+        b.HasOne<Image>()
+            .WithMany()
+            .HasForeignKey(p => p.ImageId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         b.HasIndex(p => p.StoreId);
         b.HasIndex(p => p.Category);

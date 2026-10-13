@@ -9,7 +9,7 @@ public record CreateRecipeCommand(
     string Description,
     int PreparationMinutes,
     int Servings,
-    string? PhotoUrl,
+    int? ImageId,
     IReadOnlyList<IngredientCommand> Ingredients,
     IReadOnlyList<StepCommand> Steps);
 
@@ -18,4 +18,4 @@ public record UpdateRecipeCommand(
     string Description,
     int PreparationMinutes,
     int Servings,
-    string? PhotoUrl);
+    int? ImageId);
