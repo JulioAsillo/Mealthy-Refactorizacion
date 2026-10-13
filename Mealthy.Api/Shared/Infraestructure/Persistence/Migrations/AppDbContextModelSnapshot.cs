@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using NpgsqlTypes;
 
 #nullable disable
 
@@ -20,6 +21,7 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "pg_trgm");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Mealthy.Api.Marketplace.Domain.Model.Product", b =>
@@ -83,6 +85,12 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                     b.HasIndex("ImageId")
                         .HasDatabaseName("ix_products_image_id");
 
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_products_name");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
+
                     b.HasIndex("StoreId")
                         .HasDatabaseName("ix_products_store_id");
 
@@ -138,6 +146,12 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
 
                     b.HasIndex("ImageId")
                         .HasDatabaseName("ix_stores_image_id");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_stores_name");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Name"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Name"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("OwnerId")
                         .IsUnique()
@@ -361,6 +375,12 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("preparation_minutes");
 
+                    b.Property<NpgsqlTsVector>("SearchVector")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasColumnName("search_vector")
+                        .HasComputedColumnSql("to_tsvector('spanish'::regconfig, coalesce(title, '') || ' ' || coalesce(description, ''))", true);
+
                     b.Property<int>("Servings")
                         .HasColumnType("integer")
                         .HasColumnName("servings");
@@ -383,6 +403,17 @@ namespace Mealthy.Api.Shared.Infraestructure.Persistence.Migrations
 
                     b.HasIndex("ImageId")
                         .HasDatabaseName("ix_recipes_image_id");
+
+                    b.HasIndex("SearchVector")
+                        .HasDatabaseName("ix_recipes_search_vector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SearchVector"), "gin");
+
+                    b.HasIndex("Title")
+                        .HasDatabaseName("ix_recipes_title");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Title"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Title"), new[] { "gin_trgm_ops" });
 
                     b.ToTable("recipes", (string)null);
                 });

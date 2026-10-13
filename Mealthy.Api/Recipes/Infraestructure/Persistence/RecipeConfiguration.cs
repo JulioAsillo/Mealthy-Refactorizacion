@@ -3,11 +3,15 @@ using Mealthy.Api.Recipes.Domain.Model;
 using Mealthy.Api.Security.Domain.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NpgsqlTypes;
 
 namespace Mealthy.Api.Recipes.Infraestructure.Persistence;
 
 public class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
 {
+    /// <summary>Propiedad sombra (no existe en el dominio): columna tsvector para búsqueda full-text.</summary>
+    public const string SearchVector = "SearchVector";
+
     public void Configure(EntityTypeBuilder<Recipe> b)
     {
         b.ToTable("recipes");
@@ -24,6 +28,18 @@ public class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
             .HasForeignKey(r => r.AuthorId)
             .OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(r => r.AuthorId);
+
+        // ---------- Búsqueda ----------
+        // Full-text en español: "tomates" encuentra "tomate", ignora "de", "la"… Columna generada por
+        // PostgreSQL (STORED): siempre coherente con título y descripción, sin código que la mantenga.
+        b.Property<NpgsqlTsVector>(SearchVector)
+            .HasComputedColumnSql(
+                "to_tsvector('spanish'::regconfig, coalesce(title, '') || ' ' || coalesce(description, ''))",
+                stored: true);
+        b.HasIndex(SearchVector).HasMethod("gin");
+
+        // Trigramas para coincidencias parciales del título ("toma" → "Tomates rellenos")
+        b.HasIndex(r => r.Title).HasMethod("gin").HasOperators("gin_trgm_ops");
 
         // Foto: si la imagen se borra, la receta queda sin foto
         b.HasOne<Image>()

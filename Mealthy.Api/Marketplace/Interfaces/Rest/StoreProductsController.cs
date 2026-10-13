@@ -3,21 +3,25 @@ using Mealthy.Api.Marketplace.Interfaces.Rest.Mappings;
 using Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 using Mealthy.Api.Security.Infraestructure.Auth;
 using Mealthy.Api.Shared.Application;
+using Mealthy.Api.Shared.Infraestructure.Web;
 using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace Mealthy.Api.Marketplace.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/stores/{storeId:int}/products")]
 [Authorize(Policy = AuthPolicies.StoreOwnerOnly)]
+[EvictCacheTags(CacheTags.Products)]
 [Produces("application/json")]
 public class StoreProductsController(ProductService products) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
+    [OutputCache(PolicyName = CachePolicies.Products)]
     [ProducesResponseType<PagedResult<ProductResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PagedResult<ProductResponse>>> List(

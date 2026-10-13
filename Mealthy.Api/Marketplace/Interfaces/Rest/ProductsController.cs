@@ -2,9 +2,11 @@ using Mealthy.Api.Marketplace.Application.Services;
 using Mealthy.Api.Marketplace.Interfaces.Rest.Mappings;
 using Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 using Mealthy.Api.Shared.Application;
+using Mealthy.Api.Shared.Infraestructure.Web;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace Mealthy.Api.Marketplace.Interfaces.Rest;
 
@@ -16,6 +18,7 @@ namespace Mealthy.Api.Marketplace.Interfaces.Rest;
 public class ProductsController(ProductService products) : ControllerBase
 {
     [HttpGet]
+    [OutputCache(PolicyName = CachePolicies.Products)]
     [ProducesResponseType<PagedResult<ProductResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ProductResponse>>> Search(
         [FromQuery] PageQuery query, [FromQuery] string? category, [FromQuery] string? search, CancellationToken ct)
@@ -26,6 +29,7 @@ public class ProductsController(ProductService products) : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [OutputCache(PolicyName = CachePolicies.Products)]
     [ProducesResponseType<ProductResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductResponse>> GetById(int id, CancellationToken ct)

@@ -2,21 +2,25 @@ using Mealthy.Api.Recipes.Application.Services;
 using Mealthy.Api.Recipes.Interfaces.Rest.Mappings;
 using Mealthy.Api.Recipes.Interfaces.Rest.Resources;
 using Mealthy.Api.Shared.Application;
+using Mealthy.Api.Shared.Infraestructure.Web;
 using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace Mealthy.Api.Recipes.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/recipes")]
 [Authorize]
+[EvictCacheTags(CacheTags.Recipes)]
 [Produces("application/json")]
 public class RecipesController(RecipeService recipes) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
+    [OutputCache(PolicyName = CachePolicies.Recipes)]
     [ProducesResponseType<PagedResult<RecipeSummaryResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<RecipeSummaryResponse>>> List(
         [FromQuery] PageQuery query, [FromQuery] string? search, CancellationToken ct)
@@ -28,6 +32,7 @@ public class RecipesController(RecipeService recipes) : ControllerBase
 
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [OutputCache(PolicyName = CachePolicies.Recipes)]
     [ProducesResponseType<RecipeDetailResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecipeDetailResponse>> GetById(int id, CancellationToken ct)

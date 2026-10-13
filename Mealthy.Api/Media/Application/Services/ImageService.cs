@@ -5,6 +5,7 @@ using Mealthy.Api.Media.Domain.Model;
 using Mealthy.Api.Media.Domain.Repositories;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Mealthy.Api.Media.Application.Services;
@@ -22,9 +23,20 @@ public class ImageService(
     IImageProcessingQueue queue,
     IUnitOfWorks unitOfWork,
     IOptions<MediaOptions> options,
+    HybridCache cache,
     TimeProvider clock) : IImageAttachmentValidator
 {
     private const int CleanupBatchSize = 100;
+
+    /// <summary>
+    /// Una imagen Ready es inmutable: su Key no cambia hasta que se borra. Cada &lt;img&gt; de un listado pasa por
+    /// GET /images/{id}/content, así que la Key se cachea (L1 memoria + L2 Redis) en vez de consultar la BD.
+    /// </summary>
+    private static readonly HybridCacheEntryOptions ReadyImageCacheOptions = new()
+    {
+        Expiration = TimeSpan.FromHours(6),
+        LocalCacheExpiration = TimeSpan.FromMinutes(10)
+    };
     private MediaOptions Options => options.Value;
 
     public async Task<ImageUpload> CreateUploadAsync(int ownerId, CreateImageUploadCommand cmd, CancellationToken ct = default)
@@ -82,11 +94,17 @@ public class ImageService(
 
     public async Task<Uri> GetVariantUriAsync(int id, ImageVariant variant, CancellationToken ct = default)
     {
-        var image = await GetAsync(id, ct);
-        if (image.Status != ImageStatus.Ready)
-            throw new NotFoundException($"La imagen {id} todavía no está disponible.");
+        // Si la imagen no existe o aún no está Ready, la factoría lanza y HybridCache NO guarda nada:
+        // en cuanto el worker termine, la siguiente petición ya la encuentra.
+        var key = await cache.GetOrCreateAsync(ReadyImageCacheKey(id), async token =>
+        {
+            var image = await GetAsync(id, token);
+            if (image.Status != ImageStatus.Ready)
+                throw new NotFoundException($"La imagen {id} todavía no está disponible.");
+            return image.Key;
+        }, ReadyImageCacheOptions, cancellationToken: ct);
 
-        return storage.GetVariantUri(image.Key, variant);
+        return storage.GetVariantUri(key, variant);
     }
 
     public async Task EnsureAttachableAsync(int? imageId, int userId, CancellationToken ct = default)
@@ -114,6 +132,7 @@ public class ImageService(
         foreach (var image in orphans)
         {
             await storage.DeleteAllAsync(image.Key, ct);   // primero blobs: si falla, la fila sigue y se reintenta
+            await cache.RemoveAsync(ReadyImageCacheKey(image.Id), ct);
             images.Remove(image);
         }
 
@@ -122,6 +141,8 @@ public class ImageService(
     }
 
     private DateTime Now => clock.GetUtcNow().UtcDateTime;
+
+    private static string ReadyImageCacheKey(int id) => $"media:image:{id}:key";
 
     private static string ToMegabytes(long bytes) => (bytes / 1024d / 1024d).ToString("0.#");
 }

@@ -3,6 +3,7 @@ using Mealthy.Api.Recipes.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.Persistence;
 using Mealthy.Api.Shared.Infraestructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
+using NpgsqlTypes;
 
 namespace Mealthy.Api.Recipes.Infraestructure.Persistence;
 
@@ -18,17 +19,34 @@ public class RecipeRepository(AppDbContext context) : BaseRepository<Recipe>(con
         int page, int pageSize, string? search, CancellationToken ct = default)
     {
         var query = Set.AsNoTracking();
+        IOrderedQueryable<Recipe> ordered;
 
-        if (!string.IsNullOrWhiteSpace(search))
+        if (string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{search.Trim()}%";
-            query = query.Where(r => EF.Functions.ILike(r.Title, pattern));
+            ordered = query.OrderByDescending(r => r.CreatedAt).ThenByDescending(r => r.Id);
+        }
+        else
+        {
+            // Full-text (título + descripción, con raíces en español) O coincidencia parcial en el título.
+            // websearch_to_tsquery acepta la sintaxis de un buscador: "pollo -frito", comillas, OR.
+            var term = search.Trim();
+            var pattern = $"%{term}%";
+
+            query = query.Where(r =>
+                EF.Property<NpgsqlTsVector>(r, RecipeConfiguration.SearchVector)
+                    .Matches(EF.Functions.WebSearchToTsQuery("spanish", term))
+                || EF.Functions.ILike(r.Title, pattern));
+
+            // Primero las más relevantes
+            ordered = query
+                .OrderByDescending(r => EF.Property<NpgsqlTsVector>(r, RecipeConfiguration.SearchVector)
+                    .Rank(EF.Functions.WebSearchToTsQuery("spanish", term)))
+                .ThenByDescending(r => r.CreatedAt)
+                .ThenByDescending(r => r.Id);
         }
 
         var total = await query.CountAsync(ct);
-        var items = await query
-            .OrderByDescending(r => r.CreatedAt)
-            .ThenByDescending(r => r.Id)
+        var items = await ordered
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

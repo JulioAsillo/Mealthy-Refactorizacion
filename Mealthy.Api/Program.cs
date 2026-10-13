@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Mealthy.Api.Marketplace;
+using Mealthy.Api.Media;
 using Mealthy.Api.Pantry;
 using Mealthy.Api.Recipes;
 using Mealthy.Api.Security;
@@ -41,8 +42,10 @@ builder.Services.AddScoped<IUnitOfWorks, UnitOfWork>();
 
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddApiRateLimiting();
+builder.AddApiPerformance();   // Redis + HybridCache, output cache del catálogo, compresión
 
 // ---------- Bounded contexts ----------
+builder.AddMediaModule();   // Blob/Queue Storage, workers y el contrato IImageAttachmentValidator
 builder.Services.AddSecurityModule(builder.Configuration);
 builder.Services.AddRecipesModule();
 builder.Services.AddPantryModule();
@@ -50,6 +53,7 @@ builder.Services.AddMarketplaceModule();
 
 var app = builder.Build();
 
+app.UseResponseCompression();   // primero: comprime todo lo que salga, incluidas respuestas del caché
 app.UseExceptionHandler();
 app.UseStatusCodePages();   // 401/403 del pipeline de auth también salen como ProblemDetails
 
@@ -64,11 +68,13 @@ else
     app.UseHttpsRedirection();
 }
 
-// Orden importa: CORS antes de auth (el preflight OPTIONS no lleva token)
+// Orden importa: CORS antes de auth (el preflight OPTIONS no lleva token) y el rate limiter
+// después de autenticar, para poder limitar por usuario (política "uploads").
 app.UseCors(CorsExtensions.FrontendPolicy);
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
+app.UseOutputCache();   // después de CORS y de auth; solo actúa en endpoints con [OutputCache]
 
 app.MapControllers();
 app.MapApiHealthChecks();

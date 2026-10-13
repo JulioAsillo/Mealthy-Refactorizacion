@@ -26,6 +26,11 @@ var storage = builder.AddAzureStorage("storage")
 var blobs = storage.AddBlobs("blobs");
 var queues = storage.AddQueues("queues");
 
+// ---------- Redis ----------
+// L2 de HybridCache: compartido entre instancias de la API y sobrevive a reinicios del proceso.
+var cache = builder.AddRedis("cache")
+    .WithLifetime(ContainerLifetime.Persistent);
+
 // ---------- API ----------
 // connectionName "DefaultConnection": la API sigue leyendo GetConnectionString("DefaultConnection"),
 // así no hace falta tocar su configuración. Aspire la inyecta como variable de entorno
@@ -34,9 +39,11 @@ var api = builder.AddProject<Projects.Mealthy_Api>("api")
     .WithReference(db, connectionName: "DefaultConnection")
     .WithReference(blobs)
     .WithReference(queues)
+    .WithReference(cache)
     .WaitFor(db)
     .WaitFor(blobs)
     .WaitFor(queues)
+    .WaitFor(cache)
     .WithHttpHealthCheck("/health");
 
 // ---------- Frontend (repo separado: mealthy-frontend) ----------

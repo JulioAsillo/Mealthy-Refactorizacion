@@ -8,6 +8,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // Índices de trigramas: hacen que ILIKE '%texto%' use índice (GIN) en vez de recorrer la tabla
+        builder.HasPostgresExtension("pg_trgm");
+
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 

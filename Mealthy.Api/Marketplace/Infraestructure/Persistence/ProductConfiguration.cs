@@ -31,5 +31,6 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         b.HasIndex(p => p.StoreId);
         b.HasIndex(p => p.Category);
+        b.HasIndex(p => p.Name).HasMethod("gin").HasOperators("gin_trgm_ops");   // ?search= con ILIKE
     }
 }

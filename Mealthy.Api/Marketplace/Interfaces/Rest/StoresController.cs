@@ -3,21 +3,25 @@ using Mealthy.Api.Marketplace.Interfaces.Rest.Mappings;
 using Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 using Mealthy.Api.Security.Infraestructure.Auth;
 using Mealthy.Api.Shared.Application;
+using Mealthy.Api.Shared.Infraestructure.Web;
 using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace Mealthy.Api.Marketplace.Interfaces.Rest;
 
 [ApiController]
 [Route("api/v1/stores")]
 [Authorize(Policy = AuthPolicies.StoreOwnerOnly)]
+[EvictCacheTags(CacheTags.Stores)]
 [Produces("application/json")]
 public class StoresController(StoreService stores) : ControllerBase
 {
     [HttpGet]
     [AllowAnonymous]
+    [OutputCache(PolicyName = CachePolicies.Stores)]
     [ProducesResponseType<PagedResult<StoreResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<StoreResponse>>> List(
         [FromQuery] PageQuery query, [FromQuery] string? search, CancellationToken ct)
@@ -29,12 +33,13 @@ public class StoresController(StoreService stores) : ControllerBase
 
     [HttpGet("{id:int}")]
     [AllowAnonymous]
+    [OutputCache(PolicyName = CachePolicies.Stores)]
     [ProducesResponseType<StoreResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StoreResponse>> GetById(int id, CancellationToken ct)
         => Ok((await stores.GetAsync(id, ct)).ToResponse());
 
-    /// <summary>La tienda del StoreOwner autenticado (útil para el frontend tras el login).</summary>
+    /// <summary>La tienda del StoreOwner autenticado. Depende del usuario: NO lleva output cache.</summary>
     [HttpGet("me")]
     [ProducesResponseType<StoreResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]

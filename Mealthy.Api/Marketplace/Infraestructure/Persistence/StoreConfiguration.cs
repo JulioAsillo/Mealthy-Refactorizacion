@@ -30,5 +30,6 @@ public class StoreConfiguration : IEntityTypeConfiguration<Store>
 
         b.HasIndex(s => s.OwnerId).IsUnique();
         b.HasIndex(s => s.Ruc).IsUnique();
+        b.HasIndex(s => s.Name).HasMethod("gin").HasOperators("gin_trgm_ops");   // ?search= con ILIKE
     }
 }
