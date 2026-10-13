@@ -50,7 +50,7 @@ public class UsersController(UserService users) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        await users.DeleteAsync(id, ct);
+        await users.DeleteAsync(id, User.GetUserId(), ct);
         return NoContent();
     }
 }

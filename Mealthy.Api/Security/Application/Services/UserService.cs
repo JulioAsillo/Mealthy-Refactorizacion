@@ -32,9 +32,15 @@ public class UserService(IUserRepository users, IUnitOfWorks unitOfWork)
         return user;
     }
 
-    public async Task DeleteAsync(int id, CancellationToken ct = default)
+    public async Task DeleteAsync(int id, int requesterId, CancellationToken ct = default)
     {
+        if (id == requesterId)
+            throw new BusinessRuleException("No puedes eliminar tu propia cuenta.");
+
         var user = await GetByIdAsync(id, ct);
+        if (user.Role == Role.Admin)
+            throw new ForbiddenException("No se puede eliminar a un administrador.");
+
         users.Remove(user);
         await unitOfWork.CompleteAsync(ct);
     }
