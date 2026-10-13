@@ -7,6 +7,7 @@ using Mealthy.Api.Security;
 using Mealthy.Api.Security.Infraestructure.Persistence;
 using Mealthy.Api.Shared.Domain.Repositories;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling;
+using Mealthy.Api.Shared.Infraestructure.Messaging;
 using Mealthy.Api.Shared.Infraestructure.OpenApi;
 using Mealthy.Api.Shared.Infraestructure.Persistence;
 using Mealthy.Api.Shared.Infraestructure.Persistence.Repositories;
@@ -43,6 +44,7 @@ builder.Services.AddScoped<IUnitOfWorks, UnitOfWork>();
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddApiRateLimiting();
 builder.AddApiPerformance();   // Redis + HybridCache, output cache del catálogo, compresión
+builder.Services.AddOutbox();  // eventos de dominio → handlers, con garantía transaccional
 
 // ---------- Bounded contexts ----------
 builder.AddMediaModule();   // Blob/Queue Storage, workers y el contrato IImageAttachmentValidator

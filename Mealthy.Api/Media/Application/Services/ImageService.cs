@@ -14,13 +14,12 @@ namespace Mealthy.Api.Media.Application.Services;
 /// Casos de uso de imágenes. Flujo de subida:
 ///  1. POST /images            → fila AwaitingUpload + URL SAS de escritura (el binario NO pasa por la API).
 ///  2. PUT &lt;url SAS&gt;          → el navegador sube directo a Blob Storage.
-///  3. POST /images/{id}/complete → se valida el tamaño real y se encola para el worker.
+///  3. POST /images/{id}/complete → se valida el tamaño real; el evento ImageUploaded va al outbox.
 ///  4. Worker                  → variantes WebP, borra el original → Ready.
 /// </summary>
 public class ImageService(
     IImageRepository images,
     IImageStorage storage,
-    IImageProcessingQueue queue,
     IUnitOfWorks unitOfWork,
     IOptions<MediaOptions> options,
     HybridCache cache,
@@ -79,12 +78,10 @@ public class ImageService(
             throw new BusinessRuleException($"La imagen no puede pesar más de {ToMegabytes(Options.MaxUploadBytes)} MB.");
         }
 
+        // MarkUploaded genera ImageUploaded → outbox_messages en el MISMO commit.
+        // El OutboxProcessor lo encola después: si el proceso cae, el mensaje sigue en la tabla.
         image.MarkUploaded(Now);
         await unitOfWork.CompleteAsync(ct);
-
-        // Ventana conocida: si el proceso cae entre el commit y el envío, la imagen queda en Processing.
-        // Se resuelve con el patrón Outbox (Fase 4 del roadmap).
-        await queue.EnqueueAsync(image.Id, ct);
         return image;
     }
 

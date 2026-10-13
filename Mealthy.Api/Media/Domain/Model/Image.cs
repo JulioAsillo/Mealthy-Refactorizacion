@@ -1,3 +1,4 @@
+using Mealthy.Api.Media.Domain.Events;
 using Mealthy.Api.Shared.Domain.Model;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
@@ -60,6 +61,7 @@ public class Image : Entity
 
         Status = ImageStatus.Processing;
         UploadedAt = now;
+        RaiseDomainEvent(new ImageUploaded(Id));   // el outbox lo lleva a la cola en la misma transacción
         return true;
     }
 

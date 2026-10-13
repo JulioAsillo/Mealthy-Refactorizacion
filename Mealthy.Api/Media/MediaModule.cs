@@ -1,11 +1,14 @@
 using Mealthy.Api.Media.Application;
 using Mealthy.Api.Media.Application.Contracts;
+using Mealthy.Api.Media.Application.EventHandlers;
 using Mealthy.Api.Media.Application.Services;
+using Mealthy.Api.Media.Domain.Events;
 using Mealthy.Api.Media.Domain.Repositories;
 using Mealthy.Api.Media.Infraestructure.Persistence;
 using Mealthy.Api.Media.Infraestructure.Processing;
 using Mealthy.Api.Media.Infraestructure.Storage;
 using Mealthy.Api.Media.Infraestructure.Workers;
+using Mealthy.Api.Shared.Infraestructure.Messaging;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Mealthy.Api.Media;
@@ -39,6 +42,9 @@ public static class MediaModule
         builder.Services.AddScoped<ImageService>();
         builder.Services.AddScoped<IImageAttachmentValidator>(sp => sp.GetRequiredService<ImageService>());
         builder.Services.AddScoped<ImageProcessingService>();
+
+        // Eventos de dominio (vía outbox)
+        builder.Services.AddDomainEventHandler<ImageUploaded, EnqueueProcessingWhenImageUploaded>();
 
         // Orden de arranque: primero crear contenedores/cola, luego los workers
         builder.Services.AddHostedService<MediaStorageInitializer>();
