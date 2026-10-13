@@ -15,8 +15,10 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------- Shared ----------
+// ---------- Aspire: OpenTelemetry, health "self", resiliencia HTTP ----------
+builder.AddServiceDefaults();
 
+// ---------- Shared ----------
 
 builder.Services
     .AddControllers()
@@ -33,11 +35,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     if (builder.Environment.IsDevelopment())
         options.EnableSensitiveDataLogging().EnableDetailedErrors();
 });
+// Reintentos ante fallos transitorios, health check "AppDbContext" y trazas de EF en el dashboard
+builder.EnrichNpgsqlDbContext<AppDbContext>();
 builder.Services.AddScoped<IUnitOfWorks, UnitOfWork>();
 
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddApiRateLimiting();
-builder.Services.AddApiHealthChecks();
 
 // ---------- Bounded contexts ----------
 builder.Services.AddSecurityModule(builder.Configuration);
@@ -69,6 +72,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapApiHealthChecks();
+
+await app.MigrateDatabaseAsync();   // solo Development
 await app.SeedAdminAsync();
 
 app.Run();

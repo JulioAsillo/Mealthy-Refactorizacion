@@ -1,6 +1,3 @@
-using System.Text.Json;
-using Mealthy.Api.Shared.Infraestructure.Persistence;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -9,21 +6,14 @@ namespace Mealthy.Api.Shared.Infraestructure.Web;
 public static class HealthCheckExtensions
 {
     /// <summary>
-    /// Health checks nativos:
-    ///  - "api": siempre Healthy si el proceso responde.
-    ///  - "postgres": AddDbContextCheck ejecuta CanConnectAsync() del AppDbContext (abre conexión con la misma
-    ///    connection string que usa la app). Si Postgres no responde → Unhealthy.
+    /// GET /health → 200 si todo está Healthy, 503 si algo falla. Visible en Scalar y usado por Aspire
+    /// (WithHttpHealthCheck) para saber cuándo la API está lista.
+    ///
+    /// Los checks ya no se registran aquí: cada integración aporta el suyo.
+    ///  - "self": ServiceDefaults (el proceso responde).
+    ///  - "AppDbContext": EnrichNpgsqlDbContext (abre conexión a PostgreSQL).
+    ///  - Fases siguientes: Blob/Queue Storage, Redis… aparecen solos al agregar su integración.
     /// </summary>
-    public static IServiceCollection AddApiHealthChecks(this IServiceCollection services)
-    {
-        services.AddHealthChecks()
-            .AddCheck("api", () => HealthCheckResult.Healthy("La API responde."))
-            .AddDbContextCheck<AppDbContext>("postgres");
-
-        return services;
-    }
-
-    /// <summary>GET /health → 200 si todo está Healthy, 503 si algo falla. Visible en Scalar.</summary>
     public static RouteHandlerBuilder MapApiHealthChecks(this IEndpointRouteBuilder app)
         => app.MapGet("/health", async (HealthCheckService health, CancellationToken ct) =>
             {
@@ -49,7 +39,7 @@ public static class HealthCheckExtensions
             })
             .WithName("Health")
             .WithTags("Health")
-            .WithSummary("Estado de la API y de PostgreSQL")
+            .WithSummary("Estado de la API y de sus dependencias")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status503ServiceUnavailable)
             .AllowAnonymous()

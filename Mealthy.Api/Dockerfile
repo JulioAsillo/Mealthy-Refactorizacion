@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
@@ -8,6 +8,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Mealthy.Api/Mealthy.Api.csproj", "Mealthy.Api/"]
+# Mealthy.Api referencia a ServiceDefaults (Aspire): restore necesita también su .csproj
+COPY ["Mealthy.ServiceDefaults/Mealthy.ServiceDefaults.csproj", "Mealthy.ServiceDefaults/"]
 RUN dotnet restore "Mealthy.Api/Mealthy.Api.csproj"
 COPY . .
 WORKDIR "/src/Mealthy.Api"

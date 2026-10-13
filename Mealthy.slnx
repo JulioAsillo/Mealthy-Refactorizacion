@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="Mealthy.Api/Mealthy.Api.csproj" />
+  <Project Path="Mealthy.AppHost/Mealthy.AppHost.csproj" />
+  <Project Path="Mealthy.ServiceDefaults/Mealthy.ServiceDefaults.csproj" />
 </Solution>
