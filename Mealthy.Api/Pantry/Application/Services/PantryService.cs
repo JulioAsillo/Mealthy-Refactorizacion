@@ -31,9 +31,11 @@ public class PantryService(ISupplyRepository supplies, IUnitOfWorks unitOfWork)
         return supply;
     }
 
-    public async Task<Supply> UpdateAsync(int id, int userId, SupplyCommand cmd, CancellationToken ct = default)
+    public async Task<Supply> UpdateAsync(int id, int userId, SupplyCommand cmd, uint? expectedVersion,
+        CancellationToken ct = default)
     {
         var supply = await LoadOwnedAsync(id, userId, ct);
+        Concurrency.EnsureVersion(supply, expectedVersion);
         supply.Update(cmd.Name, cmd.Quantity, cmd.Unit, cmd.ExpiresOn);
         await unitOfWork.CompleteAsync(ct);
         return supply;

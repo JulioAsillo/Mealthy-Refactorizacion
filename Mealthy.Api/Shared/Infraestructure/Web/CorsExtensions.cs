@@ -17,7 +17,7 @@ public static class CorsExtensions
             .AllowAnyHeader()                         // Authorization, Content-Type...
             .AllowAnyMethod()
             .AllowCredentials()                       // cookie HttpOnly del refresh token (exige orígenes explícitos)
-            .WithExposedHeaders("Location")           // para leer la URL de los 201 Created
+            .WithExposedHeaders("Location", "ETag")   // URL de los 201 Created y versión del recurso
             .SetPreflightMaxAge(TimeSpan.FromMinutes(10))));
 
         return services;

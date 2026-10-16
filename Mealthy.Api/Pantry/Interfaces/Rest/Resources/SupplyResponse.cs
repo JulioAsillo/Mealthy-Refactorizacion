@@ -7,4 +7,5 @@ public record SupplyResponse(
     string Unit,
     DateOnly? ExpiresOn,
     DateTime CreatedAt,
-    DateTime? UpdatedAt);
+    DateTime? UpdatedAt,
+    uint Version);

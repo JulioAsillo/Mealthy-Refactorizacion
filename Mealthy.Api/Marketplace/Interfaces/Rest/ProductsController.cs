@@ -3,6 +3,7 @@ using Mealthy.Api.Marketplace.Interfaces.Rest.Mappings;
 using Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 using Mealthy.Api.Shared.Application;
 using Mealthy.Api.Shared.Infraestructure.Web;
+using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,5 +34,9 @@ public class ProductsController(ProductService products) : ControllerBase
     [ProducesResponseType<ProductResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ProductResponse>> GetById(int id, CancellationToken ct)
-        => Ok((await products.GetAsync(id, ct)).ToResponse());
+    {
+        var product = await products.GetAsync(id, ct);
+        Response.SetETag(product);
+        return Ok(product.ToResponse());
+    }
 }

@@ -4,7 +4,7 @@ using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 namespace Mealthy.Api.Pantry.Domain.Model;
 
 /// <summary>Insumo de la despensa personal de un usuario.</summary>
-public class Supply : Entity
+public class Supply : Entity, IVersioned
 {
     public string Name { get; private set; } = null!;
     public decimal Quantity { get; private set; }
@@ -13,6 +13,9 @@ public class Supply : Entity
 
     /// <summary>FK a users.id. Se toma SIEMPRE del token, nunca del body.</summary>
     public int UserId { get; private set; }
+
+    /// <summary>xmin de PostgreSQL (concurrencia optimista). Solo lectura: lo asigna la base de datos.</summary>
+    public uint Version { get; private set; }
 
     // Requerido por EF Core
     private Supply() { }

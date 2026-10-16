@@ -30,9 +30,14 @@ public class PantryController(PantryService pantry) : ControllerBase
     [ProducesResponseType<SupplyResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<SupplyResponse>> GetById(int id, CancellationToken ct)
-        => Ok((await pantry.GetAsync(id, User.GetUserId(), ct)).ToResponse());
+    {
+        var supply = await pantry.GetAsync(id, User.GetUserId(), ct);
+        Response.SetETag(supply);
+        return Ok(supply.ToResponse());
+    }
 
     [HttpPost]
+    [Idempotent]
     [ProducesResponseType<SupplyResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<SupplyResponse>> Create(SupplyRequest req, CancellationToken ct)
@@ -45,8 +50,13 @@ public class PantryController(PantryService pantry) : ControllerBase
     [ProducesResponseType<SupplyResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<SupplyResponse>> Update(int id, SupplyRequest req, CancellationToken ct)
-        => Ok((await pantry.UpdateAsync(id, User.GetUserId(), req.ToCommand(), ct)).ToResponse());
+    {
+        var supply = await pantry.UpdateAsync(id, User.GetUserId(), req.ToCommand(), Request.GetIfMatchVersion(), ct);
+        Response.SetETag(supply);
+        return Ok(supply.ToResponse());
+    }
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

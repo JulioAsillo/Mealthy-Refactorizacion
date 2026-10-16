@@ -36,14 +36,20 @@ public class RecipesController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<RecipeDetailResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecipeDetailResponse>> GetById(int id, CancellationToken ct)
-        => Ok((await recipes.GetAsync(id, ct)).ToDetailResponse());
+    {
+        var recipe = await recipes.GetAsync(id, ct);
+        Response.SetETag(recipe);
+        return Ok(recipe.ToDetailResponse());
+    }
 
     [HttpPost]
+    [Idempotent]
     [ProducesResponseType<RecipeDetailResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RecipeDetailResponse>> Create(CreateRecipeRequest req, CancellationToken ct)
     {
         var recipe = await recipes.CreateAsync(User.GetUserId(), req.ToCommand(), ct);
+        Response.SetETag(recipe);
         return CreatedAtAction(nameof(GetById), new { id = recipe.Id }, recipe.ToDetailResponse());
     }
 
@@ -52,8 +58,13 @@ public class RecipesController(RecipeService recipes) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<RecipeDetailResponse>> Update(int id, UpdateRecipeRequest req, CancellationToken ct)
-        => Ok((await recipes.UpdateAsync(id, req.ToCommand(), ct)).ToDetailResponse());
+    {
+        var recipe = await recipes.UpdateAsync(id, req.ToCommand(), Request.GetIfMatchVersion(), ct);
+        Response.SetETag(recipe);
+        return Ok(recipe.ToDetailResponse());
+    }
 
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

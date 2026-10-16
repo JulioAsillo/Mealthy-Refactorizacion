@@ -37,7 +37,11 @@ public class StoresController(StoreService stores) : ControllerBase
     [ProducesResponseType<StoreResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<StoreResponse>> GetById(int id, CancellationToken ct)
-        => Ok((await stores.GetAsync(id, ct)).ToResponse());
+    {
+        var store = await stores.GetAsync(id, ct);
+        Response.SetETag(store);
+        return Ok(store.ToResponse());
+    }
 
     /// <summary>La tienda del StoreOwner autenticado. Depende del usuario: NO lleva output cache.</summary>
     [HttpGet("me")]
@@ -47,6 +51,7 @@ public class StoresController(StoreService stores) : ControllerBase
         => Ok((await stores.GetByOwnerAsync(User.GetUserId(), ct)).ToResponse());
 
     [HttpPost]
+    [Idempotent]
     [ProducesResponseType<StoreResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
@@ -61,6 +66,11 @@ public class StoresController(StoreService stores) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<StoreResponse>> Update(int id, UpdateStoreRequest req, CancellationToken ct)
-        => Ok((await stores.UpdateAsync(id, req.ToCommand(), ct)).ToResponse());
+    {
+        var store = await stores.UpdateAsync(id, req.ToCommand(), Request.GetIfMatchVersion(), ct);
+        Response.SetETag(store);
+        return Ok(store.ToResponse());
+    }
 }

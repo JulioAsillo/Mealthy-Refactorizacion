@@ -17,8 +17,8 @@ public static class MarketplaceMappings
         new(r.Name, r.Category, r.Price, r.Unit, r.Stock, r.ImageId);
 
     public static StoreResponse ToResponse(this Store s) =>
-        new(s.Id, s.Name, s.Description, s.Ruc, s.ImageId, s.OwnerId, s.CreatedAt);
+        new(s.Id, s.Name, s.Description, s.Ruc, s.ImageId, s.OwnerId, s.CreatedAt, s.Version);
 
     public static ProductResponse ToResponse(this Product p) =>
-        new(p.Id, p.StoreId, p.Name, p.Category, p.Price, p.Unit, p.Stock, p.ImageId, p.CreatedAt, p.UpdatedAt);
+        new(p.Id, p.StoreId, p.Name, p.Category, p.Price, p.Unit, p.Stock, p.ImageId, p.CreatedAt, p.UpdatedAt, p.Version);
 }

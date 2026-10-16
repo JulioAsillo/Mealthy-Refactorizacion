@@ -3,7 +3,7 @@ using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 
 namespace Mealthy.Api.Recipes.Domain.Model;
 
-public class Recipe : Entity, IOwnedResource
+public class Recipe : Entity, IOwnedResource, IVersioned, ISoftDeletable
 {
     private readonly List<Ingredient> _ingredients = [];
     private readonly List<Step> _steps = [];
@@ -18,6 +18,12 @@ public class Recipe : Entity, IOwnedResource
 
     /// <summary>FK a users.id. Sin propiedad de navegación: Recipes no depende del modelo de Security.</summary>
     public int AuthorId { get; private set; }
+
+    /// <summary>xmin de PostgreSQL (concurrencia optimista). Solo lectura: lo asigna la base de datos.</summary>
+    public uint Version { get; private set; }
+
+    /// <summary>Borrado lógico: null = activo.</summary>
+    public DateTime? DeletedAt { get; set; }
 
     public IReadOnlyCollection<Ingredient> Ingredients => _ingredients.AsReadOnly();
     public IReadOnlyCollection<Step> Steps => _steps.AsReadOnly();

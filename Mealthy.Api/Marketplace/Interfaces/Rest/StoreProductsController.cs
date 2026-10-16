@@ -4,6 +4,7 @@ using Mealthy.Api.Marketplace.Interfaces.Rest.Resources;
 using Mealthy.Api.Security.Infraestructure.Auth;
 using Mealthy.Api.Shared.Application;
 using Mealthy.Api.Shared.Infraestructure.Web;
+using Mealthy.Api.Shared.Interfaces.Extensions;
 using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,7 @@ public class StoreProductsController(ProductService products) : ControllerBase
     }
 
     [HttpPost]
+    [Idempotent]
     [Authorize(Policy = AuthPolicies.StoreOwnerOnly)]
     [ProducesResponseType<ProductResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
@@ -51,8 +53,13 @@ public class StoreProductsController(ProductService products) : ControllerBase
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status403Forbidden)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status412PreconditionFailed)]
     public async Task<ActionResult<ProductResponse>> Update(int storeId, int id, ProductRequest req, CancellationToken ct)
-        => Ok((await products.UpdateAsync(storeId, id, req.ToCommand(), ct)).ToResponse());
+    {
+        var product = await products.UpdateAsync(storeId, id, req.ToCommand(), Request.GetIfMatchVersion(), ct);
+        Response.SetETag(product);
+        return Ok(product.ToResponse());
+    }
 
     /// <summary>Dueño de la tienda o Admin (moderación). Lo decide la autorización por recurso.</summary>
     [HttpDelete("{id:int}")]

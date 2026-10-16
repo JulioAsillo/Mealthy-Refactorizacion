@@ -32,7 +32,7 @@ public static class RecipeMappings
 
     public static RecipeDetailResponse ToDetailResponse(this Recipe r) =>
         new(r.Id, r.Title, r.Description, r.PreparationMinutes, r.Servings, r.ImageId, r.AuthorId,
-            r.CreatedAt, r.UpdatedAt,
+            r.CreatedAt, r.UpdatedAt, r.Version,
             r.Ingredients.Select(i => i.ToResponse()).ToList(),
             r.Steps.OrderBy(s => s.Order).Select(s => s.ToResponse()).ToList());
 }

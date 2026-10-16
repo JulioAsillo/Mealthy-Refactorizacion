@@ -43,10 +43,12 @@ public class StoreService(
         return store;
     }
 
-    public async Task<Store> UpdateAsync(int id, UpdateStoreCommand cmd, CancellationToken ct = default)
+    public async Task<Store> UpdateAsync(int id, UpdateStoreCommand cmd, uint? expectedVersion,
+        CancellationToken ct = default)
     {
         var store = await GetAsync(id, ct);   // FindByIdAsync del base trackea
         await authorizer.EnsureAsync(store, ResourceAction.Manage, ct);
+        Concurrency.EnsureVersion(store, expectedVersion);
         if (cmd.ImageId != store.ImageId)
             await images.EnsureAttachableAsync(cmd.ImageId, store.OwnerId, ct);
 

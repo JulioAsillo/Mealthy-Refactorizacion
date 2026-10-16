@@ -7,7 +7,7 @@ namespace Mealthy.Api.Marketplace.Domain.Model;
 /// Producto publicado por una tienda. Es su propio agregado (no se carga dentro de Store),
 /// porque una tienda puede tener cientos de productos.
 /// </summary>
-public class Product : Entity
+public class Product : Entity, IVersioned, ISoftDeletable
 {
     public string Name { get; private set; } = null!;
     public string Category { get; private set; } = null!;
@@ -19,6 +19,12 @@ public class Product : Entity
 
     /// <summary>FK real a stores.id (antes era un entero suelto).</summary>
     public int StoreId { get; private set; }
+
+    /// <summary>xmin de PostgreSQL (concurrencia optimista). Solo lectura: lo asigna la base de datos.</summary>
+    public uint Version { get; private set; }
+
+    /// <summary>Borrado lógico: null = activo.</summary>
+    public DateTime? DeletedAt { get; set; }
 
     // Requerido por EF Core
     private Product() { }

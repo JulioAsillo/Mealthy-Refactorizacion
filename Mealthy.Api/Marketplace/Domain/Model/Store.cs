@@ -3,7 +3,7 @@ using Mealthy.Api.Shared.Domain.Model;
 namespace Mealthy.Api.Marketplace.Domain.Model;
 
 /// <summary>Tienda (antes "Market"). Modelo A: un StoreOwner posee exactamente una tienda.</summary>
-public class Store : Entity, IOwnedResource
+public class Store : Entity, IOwnedResource, IVersioned
 {
     public string Name { get; private set; } = null!;
     public string Description { get; private set; } = null!;
@@ -13,6 +13,9 @@ public class Store : Entity, IOwnedResource
 
     /// <summary>FK 1:1 a users.id. Sin navegación: Marketplace no depende del modelo de Security.</summary>
     public int OwnerId { get; private set; }
+
+    /// <summary>xmin de PostgreSQL (concurrencia optimista). Solo lectura: lo asigna la base de datos.</summary>
+    public uint Version { get; private set; }
 
     // Requerido por EF Core
     private Store() { }

@@ -10,5 +10,5 @@ public static class PantryMappings
     public static SupplyCommand ToCommand(this SupplyRequest r) => new(r.Name, r.Quantity, r.Unit, r.ExpiresOn);
 
     public static SupplyResponse ToResponse(this Supply s) =>
-        new(s.Id, s.Name, s.Quantity, s.Unit, s.ExpiresOn, s.CreatedAt, s.UpdatedAt);
+        new(s.Id, s.Name, s.Quantity, s.Unit, s.ExpiresOn, s.CreatedAt, s.UpdatedAt, s.Version);
 }

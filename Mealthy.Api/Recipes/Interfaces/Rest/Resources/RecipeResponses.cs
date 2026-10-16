@@ -26,5 +26,6 @@ public record RecipeDetailResponse(
     int AuthorId,
     DateTime CreatedAt,
     DateTime? UpdatedAt,
+    uint Version,               // enviar en If-Match al editar
     IReadOnlyList<IngredientResponse> Ingredients,
     IReadOnlyList<StepResponse> Steps);

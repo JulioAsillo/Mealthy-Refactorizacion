@@ -12,6 +12,7 @@ using Mealthy.Api.Shared.Infraestructure.OpenApi;
 using Mealthy.Api.Shared.Infraestructure.Persistence;
 using Mealthy.Api.Shared.Infraestructure.Persistence.Repositories;
 using Mealthy.Api.Shared.Infraestructure.Web;
+using Mealthy.Api.Shared.Interfaces.Rest.Validation;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -23,8 +24,15 @@ builder.AddServiceDefaults();
 // ---------- Shared ----------
 
 builder.Services
-    .AddControllers()
+    .AddControllers(o =>
+    {
+        // Validación: una sola fuente de verdad (FluentValidation). Sin esto, MVC exigiría por su cuenta
+        // los string no anulables con un mensaje genérico en inglés antes de llegar a los validadores.
+        o.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+        o.Filters.Add<FluentValidationFilter>();
+    })
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddRequestValidation();
 builder.Services.AddRouting(o => o.LowercaseUrls = true);
 builder.Services.AddOpenApi(o => o.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
 builder.Services.AddProblemDetails();

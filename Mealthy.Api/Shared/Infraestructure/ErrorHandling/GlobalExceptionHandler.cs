@@ -17,6 +17,10 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger,
             BusinessRuleException  => (StatusCodes.Status400BadRequest, "Regla de negocio violada"),
             AuthenticationFailedException => (StatusCodes.Status401Unauthorized, "No autenticado"),
             ForbiddenException     => (StatusCodes.Status403Forbidden, "Acceso denegado"),
+            PreconditionFailedException => (StatusCodes.Status412PreconditionFailed, "El recurso cambió"),
+            // Dos guardados simultáneos sobre la misma versión (xmin): ganó el otro
+            Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException
+                                   => (StatusCodes.Status409Conflict, "El recurso cambió"),
             // Carrera entre el ExistsBy... y el INSERT: el índice único de Postgres (23505) responde
             Microsoft.EntityFrameworkCore.DbUpdateException { InnerException: Npgsql.PostgresException { SqlState: "23505" } }
                                    => (StatusCodes.Status409Conflict, "Conflicto"),
@@ -36,7 +40,13 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger,
             {
                 Status = status,
                 Title = title,
-                Detail = status is 500 || ex is Microsoft.EntityFrameworkCore.DbUpdateException ? null : ex.Message 
+                Detail = ex switch
+                {
+                    Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException =>
+                        "Alguien guardó cambios en este recurso al mismo tiempo que tú. Recarga e inténtalo de nuevo.",
+                    _ when status is 500 || ex is Microsoft.EntityFrameworkCore.DbUpdateException => null,
+                    _ => ex.Message
+                } 
             }
         });
     }

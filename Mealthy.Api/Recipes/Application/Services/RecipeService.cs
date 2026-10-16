@@ -51,9 +51,11 @@ public class RecipeService(
         return recipe;
     }
 
-    public async Task<Recipe> UpdateAsync(int id, UpdateRecipeCommand cmd, CancellationToken ct = default)
+    public async Task<Recipe> UpdateAsync(int id, UpdateRecipeCommand cmd, uint? expectedVersion,
+        CancellationToken ct = default)
     {
         var recipe = await LoadAuthorizedAsync(id, ResourceAction.Manage, ct);
+        Concurrency.EnsureVersion(recipe, expectedVersion);
         if (cmd.ImageId != recipe.ImageId)   // solo se valida la foto nueva
             await images.EnsureAttachableAsync(cmd.ImageId, recipe.AuthorId, ct);
 
@@ -65,7 +67,7 @@ public class RecipeService(
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         var recipe = await LoadAuthorizedAsync(id, ResourceAction.Delete, ct);   // dueño o Admin
-        recipes.Remove(recipe);               // cascade borra ingredientes y pasos
+        recipes.Remove(recipe);               // borrado lógico (ISoftDeletable): ingredientes y pasos se conservan
         await unitOfWork.CompleteAsync(ct);
     }
 

@@ -8,7 +8,8 @@ public record StoreResponse(
     // Foto: GET /api/v1/images/{ImageId}/content?size=sm|md|lg
     int? ImageId,
     int OwnerId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    uint Version);
 
 public record ProductResponse(
     int Id,
@@ -21,4 +22,5 @@ public record ProductResponse(
     // Foto: GET /api/v1/images/{ImageId}/content?size=sm|md|lg
     int? ImageId,
     DateTime CreatedAt,
-    DateTime? UpdatedAt);
+    DateTime? UpdatedAt,
+    uint Version);

@@ -5,6 +5,7 @@ using Mealthy.Api.Media.Interfaces.Rest.Resources;
 using Mealthy.Api.Shared.Infraestructure.ErrorHandling.Exceptions;
 using Mealthy.Api.Shared.Infraestructure.Web;
 using Mealthy.Api.Shared.Interfaces.Extensions;
+using Mealthy.Api.Shared.Interfaces.Rest;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -19,6 +20,7 @@ public class ImagesController(ImageService images) : ControllerBase
 {
     /// <summary>Paso 1: reserva la imagen y devuelve la URL SAS para subirla directo a Blob Storage.</summary>
     [HttpPost]
+    [Idempotent]
     [EnableRateLimiting(RateLimitingExtensions.UploadPolicy)]
     [ProducesResponseType<ImageUploadResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]

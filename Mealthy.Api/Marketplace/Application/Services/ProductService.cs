@@ -52,10 +52,12 @@ public class ProductService(
         return product;
     }
 
-    public async Task<Product> UpdateAsync(int storeId, int id, ProductCommand cmd, CancellationToken ct = default)
+    public async Task<Product> UpdateAsync(int storeId, int id, ProductCommand cmd, uint? expectedVersion,
+        CancellationToken ct = default)
     {
         var store = await LoadAuthorizedStoreAsync(storeId, ResourceAction.Manage, ct);
         var product = await LoadInStoreAsync(storeId, id, ct);
+        Concurrency.EnsureVersion(product, expectedVersion);
         if (cmd.ImageId != product.ImageId)   // solo se valida la foto nueva
             await images.EnsureAttachableAsync(cmd.ImageId, store.OwnerId, ct);
 
@@ -69,7 +71,7 @@ public class ProductService(
         await LoadAuthorizedStoreAsync(storeId, ResourceAction.Delete, ct);   // dueño o Admin
         var product = await LoadInStoreAsync(storeId, id, ct);
 
-        products.Remove(product);
+        products.Remove(product);   // borrado lógico (ISoftDeletable)
         await unitOfWork.CompleteAsync(ct);
     }
 
